@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="STORM.png" width="500">
+</p>
+
 # STORM
 
 This repository contains a C++ library for computing scalar fluxes on generic orbits around Kerr black holes. 
