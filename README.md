@@ -172,5 +172,3 @@ All example programs demonstrate how to:
 - **Sara Gliorio** – Main developer and maintainer. For questions or issues, contact: <sara.gliorio@gssi.it>
 - **Matteo Della Rocca** – Contributions to the `makefile` and the `SpinWeightedSpheroidalHarmonics` class
 - **Next collaborator:** maybe you!
-
-![Folder preview](folder_image.png)
