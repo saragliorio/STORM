@@ -43,16 +43,14 @@ int main()
     std::cout << "(l, m, n, k) = (" << l  << ", " << m << ", " << n <<", " << k  << ") "<< std::endl;
 
     // --- Initialize ScalarFluxMode object for this mode and orbit ---
-    ScalarFluxMode* sfm_obj = new ScalarFluxMode(s, M, m, a, p, e, theta_inc, l, m, k, n);
+    ScalarFluxMode sfm_obj = ScalarFluxMode(s, M, m, a, p, e, theta_inc, l, m, k, n);
     
     // --- Compute scalar energy flux for a generic orbit ---
     float_type flux_horizon;     // flux at black hole horizon
     float_type flux_infinity;    // flux at infinity
-    sfm_obj->sfmm_get_energy_flux_horizon_infinity_generic_orbit(flux_horizon, flux_infinity);  
+    sfm_obj.sfmm_get_energy_flux_horizon_infinity_generic_orbit(flux_horizon, flux_infinity);  
     
     // --- Output results ---
     std::cout << "Energy flux at the horizon: " << flux_horizon << std::endl;
     std::cout << "Energy flux at infinity: " << flux_infinity << std::endl;
-
-    delete sfm_obj;
 }

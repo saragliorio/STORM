@@ -1,15 +1,16 @@
 .PHONY : all RHSTEST GOMTEST SWSHTEST SFMTEST
+all : all_sources # Define the default target to build all sources
 
 # compilation flags and options
-
 CC := g++
+
 #uncomment the 2 lines below if you are using a mac
-#CXXFLAGS := -g -O3 -std=c++17 -Wall -Xclang -fopenmp
-#LDFLAGS := -Xclang -fopenmp -lomp
+#CXXFLAGS := -g -O3 -std=c++17 -Wall -Xclang 
+#LDFLAGS := -Xclang  
 
 #uncomment 2 two linew below if you are using linux
-CXXFLAGS := -g -O3 -std=c++17 -Wall  -Wno-reorder -fopenmp 
-LDFLAGS := -fopenmp
+CXXFLAGS := -g -O3 -std=c++17 -Wall  -Wno-reorder 
+LDFLAGS := 
 
 # Project directory structure
 SRC := ./src
@@ -18,13 +19,11 @@ INC := ./include
 OBJ := ./obj
 EXE := ./exe
 
-# Include directories (first row cluster sara, second row local sara)
-#INCLUDES := -I./$(INC) -I/home/sgliorio/boost_1_85_0
-INCLUDES := -I./$(INC) -I/usr/local/boost_1_85_0
+# Include directories: change this line to point to your Boost installation 			<-----		!!!!!! PAY ATTENTION HERE !!!!!
+INCLUDES := -I./$(INC) -I/YOUR/PATH/TO/boost_VERSION_NUMBER
 
-# Boost libraries directory (first row cluster sara, second row local sara)
-BOOST_LIB_DIR := /home/sgliorio/boost_1_85_0/libs
-#BOOST_LIB_DIR := /usr/local/boost_1_85_0/libs
+# Boost libraries directory: change this line to point to your Boost lib folder			<-----		!!!!!! PAY ATTENTION HERE !!!!!
+BOOST_LIB_DIR := /YOUR/PATH/TO/boost_VERION_NUMBER/libs
 
 # Boost libraries
 BOOST_LIBS := -L$(BOOST_LIB_DIR) 
@@ -48,24 +47,24 @@ SFMTEST : $(EXE)/SFM_test
 #define rule to compile objects from classes
 $(OBJ)/%.o: $(SRC)/%.cpp $(INC)/%.h
 	@if [ ! -d $(OBJ) ]; then mkdir -pv $(OBJ); fi
-	g++ $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
+	$(CC) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
 
 #define rules to compile objects from main sources
 $(OBJ)/RHS_test.o : $(MAIN_SRC)/RHS_test.cpp
 	@if [ ! -d $(OBJ) ]; then mkdir -pv $(OBJ); fi
-	g++ $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
+	$(CC) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
 
 $(OBJ)/GOM_test.o : $(MAIN_SRC)/GOM_test.cpp
 	@if [ ! -d $(OBJ) ]; then mkdir -pv $(OBJ); fi
-	g++ $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
+	$(CC) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
 
 $(OBJ)/SWSH_test.o : $(MAIN_SRC)/SWSH_test.cpp
 	@if [ ! -d $(OBJ) ]; then mkdir -pv $(OBJ); fi
-	g++ $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
+	$(CC) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
 
 $(OBJ)/SFM_test.o : $(MAIN_SRC)/SFM_test.cpp
 	@if [ ! -d $(OBJ) ]; then mkdir -pv $(OBJ); fi
-	g++ $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
+	$(CC) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
 
 # defining the variable all
 all : all_sources

@@ -182,6 +182,7 @@ void special_functions::sf_compute_gamma_ratio(const float_type& a, const int n,
     }
 }
 
+
 //!!!converges only for -1 < z < 1
 void special_functions::sf_compute_2F1_gauss(const complex_type& a , const complex_type& b , const complex_type& c , const float_type& z, complex_type& result)
 {
@@ -253,7 +254,6 @@ void special_functions::sf_compute_2F1_a_or_b_negative_integer_numbers(const com
   }
 }
 
-
 void special_functions::sf_compute_2F1_gauss(const float_type& a , const float_type& b , const float_type& c , const float_type& z, complex_type& result)
 {
     complex_type a_complex = static_cast<complex_type>(a);
@@ -262,7 +262,6 @@ void special_functions::sf_compute_2F1_gauss(const float_type& a , const float_t
 
     sf_compute_2F1_gauss(a_complex, b_complex, c_complex, z, result);
 }
-
 
 void special_functions::sf_compute_2F1_generalized (const complex_type& a , complex_type& b , const complex_type& c , const float_type& z, complex_type& result)
 {
@@ -394,7 +393,6 @@ void special_functions::sf_compute_1F1_gauss(const complex_type& a , const compl
         n++;
     }
 }
-
 
 void special_functions::sf_compute_confluent_hypergeometric_function(const complex_type& a , const complex_type& b ,const complex_type& z, complex_type& U)
 {

@@ -130,7 +130,10 @@ namespace bm = boost::math;
     Parameters for ScalarFluxMode
     ------------------------------------------------------------------
     */    
-    
+    /// Numerical tolerance used when comparing numbers
+    /// to avoid floating-point roundoff issues
+    inline float_type precision_threshold{float_type(1)/1e15};
+   
     /// Precision used in trapezoidal quadrature for flux integrals
     inline float_type precision_trapezoidal_quadrature{float_type(1)/1e20};
 

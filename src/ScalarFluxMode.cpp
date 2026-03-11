@@ -77,7 +77,7 @@ ScalarFluxMode::ScalarFluxMode(int s, float_type M, float_type m, float_type a, 
         complex_type B_inc;
         sfmv_homsol->rhsm_get_B_inc(B_inc);
 
-        if(sfmv_angular_frequency_omega == 0)
+        if(mp::abs(sfmv_angular_frequency_omega)  <= constants::precision_threshold)
         {
             sfmv_W = - (2.*sfmv_l + 1); // to be verified
         }
@@ -320,45 +320,76 @@ void ScalarFluxMode::sfmm_compute_energy_flux_horizon_infinity_generic_orbit()
 
 void ScalarFluxMode::sfmm_get_energy_flux_horizon_generic_orbit(float_type& flux_horizon)
 {
-    if(sfmv_angular_frequency_omega == 0)
+    if(mp::abs(sfmv_angular_frequency_omega)  <= constants::precision_threshold)
     {
         flux_horizon = 0;
     }
     else
     {
-        sfmm_compute_energy_flux_horizon_generic_orbit();
+        if(sfmv_eccentricity_e <= constants::precision_threshold && sfmv_inclination_angle  <= constants::precision_threshold)
+        {
+            sfmm_compute_energy_flux_horizon_circular_orbit();
+        }
+        else if(sfmv_eccentricity_e > constants::precision_threshold && sfmv_inclination_angle  <= constants::precision_threshold)
+        {
+            sfmm_compute_energy_flux_horizon_eccentric_orbit();
+        }
+        else
+        {
+            sfmm_compute_energy_flux_horizon_generic_orbit();
+        }
         flux_horizon = sfmv_scalar_energy_flux_horizon;
     }
-  
 }
 
 void ScalarFluxMode::sfmm_get_energy_flux_infinity_generic_orbit(float_type& flux_infinity)
 {
-    if(sfmv_angular_frequency_omega == 0)
+    if(mp::abs(sfmv_angular_frequency_omega)  <= constants::precision_threshold)
     {
         flux_infinity = 0;
     }
     else
     {
-        sfmm_compute_energy_flux_infinity_generic_orbit();
-        flux_infinity = sfmv_scalar_energy_flux_infinity;
+    if(sfmv_eccentricity_e <= constants::precision_threshold && sfmv_inclination_angle  <= constants::precision_threshold)
+    {
+        sfmm_compute_energy_flux_infinity_circular_orbit();
     }
+    else if(sfmv_eccentricity_e > constants::precision_threshold && sfmv_inclination_angle  <= constants::precision_threshold)
+    {
+        sfmm_compute_energy_flux_infinity_eccentric_orbit();
+    }
+    else
+    {
+        sfmm_compute_energy_flux_infinity_generic_orbit();
+    }
+    flux_infinity = sfmv_scalar_energy_flux_infinity;
+}
 }
 
 void ScalarFluxMode::sfmm_get_energy_flux_horizon_infinity_generic_orbit(float_type& flux_horizon, float_type& flux_infinity)
 {
-    if(sfmv_angular_frequency_omega == 0)
+    if(mp::abs(sfmv_angular_frequency_omega)  <= constants::precision_threshold)
     {
-        flux_horizon = 0;
+        flux_horizon = 0.;
         flux_infinity = 0.;
     }
     else
     {
-        sfmm_compute_energy_flux_horizon_infinity_generic_orbit();
+        if(sfmv_eccentricity_e <= constants::precision_threshold && sfmv_inclination_angle  <= constants::precision_threshold)
+        {
+            sfmm_compute_energy_flux_horizon_infinity_circular_orbit();
+        }
+        else if(sfmv_eccentricity_e > constants::precision_threshold && sfmv_inclination_angle  <= constants::precision_threshold)
+        {
+            sfmm_compute_energy_flux_horizon_infinity_eccentric_orbit();
+        }
+        else
+        {
+            sfmm_compute_energy_flux_horizon_infinity_generic_orbit();
+        }
         flux_horizon = sfmv_scalar_energy_flux_horizon;
         flux_infinity = sfmv_scalar_energy_flux_infinity;
     }
-
 }
 
 

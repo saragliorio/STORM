@@ -32,6 +32,7 @@ The project requires:
   - **ODE integration and root-finding utilities** (`boost::numeric::odeint`) for ODE integration.
   - **Finite difference utilities** (`boost::math::differentiation`) for numerical derivative computation.
 
+The Boost library is publicly available [here](https://www.boost.org/).
 Make sure Boost is installed and update the `INCLUDES` and `BOOST_LIB_DIR` paths in the Makefile.
 
 ---
@@ -42,7 +43,7 @@ This project uses a Makefile to compile the library and example programs.
 To Compile all classes and examples:
 
 ```bash
-make all
+make
 ```
 This will generate:
 
@@ -138,7 +139,7 @@ make clean
           - Circular orbits  
           - Eccentric orbits  
           - Generic orbits  
-        - Energy fluxes: 
+          - Energy fluxes: 
           - Horizon flux  
           - Infinity flux  
 
@@ -176,3 +177,10 @@ All example programs demonstrate how to:
 - **Sara Gliorio** – Main developer and maintainer. For questions or issues, contact: <sara.gliorio@gssi.it>
 - **Matteo Della Rocca** – Contributions to the `makefile` and the `SpinWeightedSpheroidalHarmonics` class
 - **Next collaborator:** maybe you!
+
+
+## Citation
+
+If you use this code in your research, please cite:
+
+- S. Gliorio et al., *Adiabatic evolution of asymmetric binaries on generic orbits with new fundamental fields I: characterization of gravitational wave fluxes*, [arXiv:2603.XXXXX](https://arxiv.org/abs/2603.XXXXX)

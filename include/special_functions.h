@@ -20,6 +20,7 @@
     - Gauss hypergeometric functions (2F1)
     - Confluent hypergeometric functions (1F1 and U)
 
+  REFERENCE: Handbook of Mathematical Functions (Abramowitz and Stegun)
 ===============================================================================
 */
 

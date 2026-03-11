@@ -41,13 +41,13 @@ int main()
     std::cout << "(l, m, n, k) = (" << l  << ", " << m << ", " << n <<", " << k  << ") "<< std::endl;
 
     // create an instance of the geodesic orbital motion class
-    GeodesicOrbitalMotion* gom_obj = new GeodesicOrbitalMotion (M, mu, a, p, e, theta_inc, l, m, k, n);
+    GeodesicOrbitalMotion gom_obj = GeodesicOrbitalMotion (M, mu, a, p, e, theta_inc, l, m, k, n);
 
     // --- Get constants of motion ---
     float_type energy;
     float_type angular_momentum;
     float_type carter_constant;
-    gom_obj->gomm_get_constants_of_motion(energy, angular_momentum, carter_constant);
+    gom_obj.gomm_get_constants_of_motion(energy, angular_momentum, carter_constant);
     std::cout << "Energy = " << energy <<std::endl;
     std::cout << "Angular momentum = " << angular_momentum <<std::endl;
     std::cout << "Carter constant = " << carter_constant <<std::endl;
@@ -57,7 +57,7 @@ int main()
     float_type Upsilon_theta;
     float_type Upsilon_phi;
     float_type Gamma;
-    gom_obj->gomm_get_frequencies_mino_time(Upsilon_r, Upsilon_theta, Upsilon_phi, Gamma);
+    gom_obj.gomm_get_frequencies_mino_time(Upsilon_r, Upsilon_theta, Upsilon_phi, Gamma);
     std::cout << "Upsilon_r = " << Upsilon_r << std::endl;
     std::cout << "Upsilon_theta = " << Upsilon_theta << std::endl;
     std::cout << "Upsilon_phi = " << Upsilon_phi <<std::endl;
@@ -67,14 +67,14 @@ int main()
     float_type Omega_r;
     float_type Omega_theta;
     float_type Omega_phi;
-    gom_obj->gomm_get_frequencies_standard_time(Omega_r, Omega_theta, Omega_phi);
+    gom_obj.gomm_get_frequencies_standard_time(Omega_r, Omega_theta, Omega_phi);
     std::cout << "Omega_r = " << Omega_r << std::endl;
     std::cout << "Omega_theta = " << Omega_theta << std::endl;
     std::cout << "Omega_phi = " << Omega_phi <<std::endl;
     
     // --- Get the angular frequency ---
     float_type omega;
-    gom_obj->gomm_get_angular_frequency_omega(omega);
+    gom_obj.gomm_get_angular_frequency_omega(omega);
     std::cout << "angular_frequency_omega = " << omega <<std::endl;
 
     
@@ -85,29 +85,28 @@ int main()
 
     // --- Evaluate orbital coordinates ---
     float_type r, z;
-    gom_obj->gomm_get_r_function(qr, r);
-    gom_obj->gomm_get_z_function(qz, z);
+    gom_obj.gomm_get_r_function(qr, r);
+    gom_obj.gomm_get_z_function(qz, z);
     std::cout << "r = " << r <<std::endl;
     std::cout << "z = " << z <<std::endl;
 
     // --- Evaluate coordinate time contributions ---
     float_type tr, tz, t;
-    gom_obj->gomm_get_tr_function(qr, tr);
-    gom_obj->gomm_get_tz_function(qz, tz);
-    gom_obj->gomm_get_t_function(qr, qz, qphi, t);
+    gom_obj.gomm_get_tr_function(qr, tr);
+    gom_obj.gomm_get_tz_function(qz, tz);
+    gom_obj.gomm_get_t_function(qr, qz, qphi, t);
     std::cout << "tr = " << tr <<std::endl;
     std::cout << "tz = " << tz <<std::endl;
     std::cout << "t = " << t <<std::endl;
 
     // --- Evaluate azimuthal motion contributions ---
     float_type phi_r, phi_z, phi;        
-    gom_obj->gomm_get_phir_function(qr, phi_r);
-    gom_obj->gomm_get_phiz_function(qz, phi_z);
-    gom_obj->gomm_get_phi_function(qr, qz, qphi, phi);
+    gom_obj.gomm_get_phir_function(qr, phi_r);
+    gom_obj.gomm_get_phiz_function(qz, phi_z);
+    gom_obj.gomm_get_phi_function(qr, qz, qphi, phi);
     std::cout << "phi_r = " << phi_r <<std::endl;
     std::cout << "phi_z = " << phi_z <<std::endl;
     std::cout << "phi = " << phi <<std::endl;
 
-    delete gom_obj;
     return 0;
 }

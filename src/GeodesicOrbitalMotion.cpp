@@ -316,7 +316,6 @@ void GeodesicOrbitalMotion::gomm_compute_tz_function(const float_type& qz, float
     }
 } 
 
-
 void GeodesicOrbitalMotion::gomm_compute_t_function(const float_type& qr, const float_type& qz, const float_type& qt, float_type& t)
 {
     float_type tr;

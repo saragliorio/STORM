@@ -22,16 +22,16 @@ int main()
   std::cout << "oblateness = " << oblateness << std::endl;
 
   // Construct SpinWeightedSpheroidalHarmonics object
-  SpinWeightedSpheroidalHarmonics* swsh_obj = new SpinWeightedSpheroidalHarmonics(s, l, m, oblateness);
+  SpinWeightedSpheroidalHarmonics swsh_obj = SpinWeightedSpheroidalHarmonics(s, l, m, oblateness);
   
   // ===== Compute eigenvalue =====
   float_type eigenvalue;                      // Angular eigenvalue
-  swsh_obj->swshm_get_eigenvalue(eigenvalue); // Retrieve eigenvalue
+  swsh_obj.swshm_get_eigenvalue(eigenvalue); // Retrieve eigenvalue
   std::cout << "eigenvalue = " << eigenvalue << std::endl;
 
   // ===== Compute separation constant λ =====
   float_type lambda;                          // Separation constant
-  swsh_obj->swshm_get_lambda(lambda);         // Retrieve λ
+  swsh_obj.swshm_get_lambda(lambda);         // Retrieve λ
   std::cout << "lambda = " << lambda << std::endl;
   
   // ===== Evaluate SWSH at given angular position =====
@@ -44,13 +44,11 @@ int main()
   complex_type dS;                            // First derivative dS/dθ
   complex_type ddS;                           // Second derivative d²S/dθ²
 
-  swsh_obj->swshm_get_S_dS_ddS(x, phi, S, dS, ddS); // Compute S, dS, d²S
+  swsh_obj.swshm_get_S_dS_ddS(x, phi, S, dS, ddS); // Compute S, dS, d²S
 
   std::cout << "S = " << S << std::endl;
   std::cout << "dS = " << dS << std::endl;
   std::cout << "ddS = " << ddS << std::endl;
-
-  delete swsh_obj;
 
   return(0);
 }
