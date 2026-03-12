@@ -183,4 +183,4 @@ All example programs demonstrate how to:
 
 If you use this code in your research, please cite:
 
-- S. Gliorio et al., *Adiabatic evolution of asymmetric binaries on generic orbits with new fundamental fields I: characterization of gravitational wave fluxes*, [arXiv:2603.XXXXX](https://arxiv.org/abs/2603.XXXXX)
+- S. Gliorio et al., *Adiabatic evolution of asymmetric binaries on generic orbits with new fundamental fields I: characterization of gravitational wave fluxes*, [arXiv:2603.2603.10116](https://arxiv.org/abs/2603.10116)
