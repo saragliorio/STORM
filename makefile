@@ -1,4 +1,4 @@
-.PHONY : all RHSTEST GOMTEST SWSHTEST SFMTEST
+.PHONY : all RHSTEST GOMTEST SWSHTEST SFMTEST MSTREGRESSION
 all : all_sources # Define the default target to build all sources
 
 # compilation flags and options
@@ -42,6 +42,7 @@ RHSTEST : $(EXE)/RHS_test
 GOMTEST : $(EXE)/GOM_test
 SWSHTEST : $(EXE)/SWSH_test
 SFMTEST : $(EXE)/SFM_test
+MSTREGRESSION : $(EXE)/MST_regression_test
 
 
 #define rule to compile objects from classes
@@ -63,6 +64,10 @@ $(OBJ)/SWSH_test.o : $(MAIN_SRC)/SWSH_test.cpp
 	$(CC) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
 
 $(OBJ)/SFM_test.o : $(MAIN_SRC)/SFM_test.cpp
+	@if [ ! -d $(OBJ) ]; then mkdir -pv $(OBJ); fi
+	$(CC) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
+
+$(OBJ)/MST_regression_test.o : $(MAIN_SRC)/MST_regression_test.cpp
 	@if [ ! -d $(OBJ) ]; then mkdir -pv $(OBJ); fi
 	$(CC) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
 
@@ -88,6 +93,10 @@ $(EXE)/SWSH_test : $(OBJECTS) $(OBJ)/SWSH_test.o
 	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
 
 $(EXE)/SFM_test : $(OBJECTS) $(OBJ)/SFM_test.o
+	@if [ ! -d $(EXE) ]; then mkdir -pv $(EXE); fi
+	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
+
+$(EXE)/MST_regression_test : $(OBJECTS) $(OBJ)/MST_regression_test.o
 	@if [ ! -d $(EXE) ]; then mkdir -pv $(EXE); fi
 	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
 

@@ -1,4 +1,31 @@
 #include "RadialHomogeneousSolution.h"
+#include <limits>
+#include <stdexcept>
+
+namespace {
+float_type integration_radius(const float_type& r, const float_type& start, const float_type& end)
+{
+    const float_type tolerance = 8 * std::numeric_limits<float_type>::epsilon();
+    if (r < start && start - r <= tolerance * mp::abs(start)) return start;
+    if (r > end && r - end <= tolerance * mp::abs(end)) return end;
+    if (!(r >= start && r <= end))
+        throw std::out_of_range("Radial radius is outside the integration interval");
+    return r;
+}
+
+template<class DenseData>
+std::array<complex_type, 2> interpolate_radial(const DenseData& data, const float_type& r)
+{
+    std::array<complex_type, 2> state;
+    for (const auto& d : data) {
+        if (r >= d.t_start && r <= d.t_start + d.dt) {
+            d.stepper_snapshot.calc_state(r, state);
+            return state;
+        }
+    }
+    throw std::out_of_range("Radial radius is not covered by dense integration data");
+}
+}
 
 RadialHomogeneousSolution::RadialHomogeneousSolution(int s, float_type M, float_type a, float_type m, float_type lambda, float_type omega, int ll, int mm) : 
         rhsv_spin_weight_s (s), 
@@ -453,8 +480,8 @@ void RadialHomogeneousSolution::rhsm_sum_minimal_coefficients(const complex_type
     {   
         complex_type addend_1 {0};
         complex_type addend_2 {0};
-        addend_1 = rhsv_minimal_coefficient_n_positive[i];
-        addend_2 = rhsv_minimal_coefficient_n_negative[i];
+        addend_1 = rhsv_minimal_coefficient_n_positive.at(i);
+        addend_2 = rhsv_minimal_coefficient_n_negative.at(i);
         sum = sum + addend_1 + addend_2;
 
         if(mp::abs(addend_1/sum) > mp::abs(addend_2/sum))
@@ -516,8 +543,8 @@ void RadialHomogeneousSolution::rhsm_compute_A_minus(const complex_type& nu, con
         gamma_ratio1_minus = gamma_ratio1_minus/(arg_gamma_ratio_1 - i );
         gamma_ratio2_minus = gamma_ratio2_minus/(arg_gamma_ratio_2 - i );
         
-        addend_1 = my_pow(-1, i) * ( gamma_ratio1_plus / gamma_ratio2_plus ) * rhsv_minimal_coefficient_n_positive[i];
-        addend_2 = my_pow(-1, i) * ( gamma_ratio1_minus / gamma_ratio2_minus ) * rhsv_minimal_coefficient_n_negative[i];
+        addend_1 = my_pow(-1, i) * ( gamma_ratio1_plus / gamma_ratio2_plus ) * rhsv_minimal_coefficient_n_positive.at(i);
+        addend_2 = my_pow(-1, i) * ( gamma_ratio1_minus / gamma_ratio2_minus ) * rhsv_minimal_coefficient_n_negative.at(i);
         sum = sum + addend_1 + addend_2;
        
         if(mp::abs(addend_1/sum) > mp::abs(addend_2/sum))
@@ -609,7 +636,7 @@ void RadialHomogeneousSolution::rhsm_compute_K(const complex_type& nu, const std
         sum1z5 +=1.;
         sum1z6 +=1.;
 
-        addend1 = my_pow(-1., n) * ((sum1gamma1)/(sum1gamma2)) * ((sum1gamma3)/(sum1gamma4)) * ((sum1gamma5)/(sum1gamma6)) * rhsv_minimal_coefficient_n_positive[n];
+        addend1 = my_pow(-1., n) * ((sum1gamma1)/(sum1gamma2)) * ((sum1gamma3)/(sum1gamma4)) * ((sum1gamma5)/(sum1gamma6)) * rhsv_minimal_coefficient_n_positive.at(n);
         accuracy1 = mp::abs(addend1/sum1);
         sum1 = sum1 + addend1;
         
@@ -658,7 +685,7 @@ void RadialHomogeneousSolution::rhsm_compute_K(const complex_type& nu, const std
         sum2ratio3 = sum2ratio3/(sum2z3 + n );
        
 
-        complex_type addend2 = my_pow(-1, n) * ((1.)/(sum2gamma)) * (1./sum2ratio1) * (sum2ratio2/sum2ratio3) * rhsv_minimal_coefficient_n_negative[-n];
+        complex_type addend2 = my_pow(-1, n) * ((1.)/(sum2gamma)) * (1./sum2ratio1) * (sum2ratio2/sum2ratio3) * rhsv_minimal_coefficient_n_negative.at(-n);
         accuracy2 = mp::abs(addend2/sum2);
         sum2 = sum2 + addend2;
         
@@ -831,7 +858,7 @@ void RadialHomogeneousSolution::rhsm_compute_R0(const complex_type& nu, const st
         gamma4_plus *= z4_plus;
         gamma2_plus = (z2_plus+1)*z2_plus*gamma2_plus;
 
-        coeff_sum = rhsv_minimal_coefficient_n_positive[n]*gamma1*gamma2_plus/gamma3_plus/gamma4_plus;
+        coeff_sum = rhsv_minimal_coefficient_n_positive.at(n)*gamma1*gamma2_plus/gamma3_plus/gamma4_plus;
         
         z2_plus +=2.;
         z3_plus += 1.;
@@ -854,7 +881,7 @@ void RadialHomogeneousSolution::rhsm_compute_R0(const complex_type& nu, const st
         gamma4_minus = gamma4_minus/z4_minus;
         gamma2_minus = gamma2_minus/z2_minus/(z2_minus+1);
 
-        coeff_sum = rhsv_minimal_coefficient_n_negative[-n]*gamma1*gamma2_minus/gamma3_minus/gamma4_minus;
+        coeff_sum = rhsv_minimal_coefficient_n_negative.at(-n)*gamma1*gamma2_minus/gamma3_minus/gamma4_minus;
         
         special_functions::sf_compute_2F1(a, b, c , arg2f1, value2f1);
 
@@ -942,7 +969,7 @@ void RadialHomogeneousSolution::rhsm_compute_R0_and_1der(const complex_type& nu,
         special_functions::sf_compute_gamma_function_z(n + nu + 1. - constants::I*rhsv_tau, gamma3);
         special_functions::sf_compute_gamma_function_z(n + nu + 1. - rhsv_spin_weight_s - constants::I*rhsv_epsilon, gamma4);
     
-        coeff_sum = rhsv_minimal_coefficient_n_positive[n]*gamma1*gamma2/gamma3/gamma4;
+        coeff_sum = rhsv_minimal_coefficient_n_positive.at(n)*gamma1*gamma2/gamma3/gamma4;
 
         special_functions::sf_compute_2F1(a, b, c , arg2f1, value2f1);
         special_functions::sf_compute_2F1(a+1, b, c , arg2f1, value2f1_der);
@@ -964,7 +991,7 @@ void RadialHomogeneousSolution::rhsm_compute_R0_and_1der(const complex_type& nu,
         special_functions::sf_compute_gamma_function_z(n + nu + 1. - constants::I*rhsv_tau, gamma3);
         special_functions::sf_compute_gamma_function_z(n + nu + 1. - rhsv_spin_weight_s - constants::I*rhsv_epsilon, gamma4);
         
-        coeff_sum = rhsv_minimal_coefficient_n_negative[-n]*gamma1*gamma2/gamma3/gamma4;
+        coeff_sum = rhsv_minimal_coefficient_n_negative.at(-n)*gamma1*gamma2/gamma3/gamma4;
 
         special_functions::sf_compute_2F1(a, b, c , arg2f1, value2f1);
         special_functions::sf_compute_2F1(a+1, b, c , arg2f1,value2f1_der);
@@ -1077,7 +1104,7 @@ void RadialHomogeneousSolution::rhsm_compute_R0_and_1der_and_2der(const complex_
         special_functions::sf_compute_gamma_function_z(n + nu + 1. - constants::I*rhsv_tau, gamma3);
         special_functions::sf_compute_gamma_function_z(n + nu + 1. - rhsv_spin_weight_s - constants::I*rhsv_epsilon, gamma4);
     
-        coeff_sum = rhsv_minimal_coefficient_n_positive[n]*gamma1*gamma2/gamma3/gamma4;
+        coeff_sum = rhsv_minimal_coefficient_n_positive.at(n)*gamma1*gamma2/gamma3/gamma4;
 
         special_functions::sf_compute_2F1(a, b, c , arg2f1, value2f1);
         special_functions::sf_compute_2F1(a+1, b, c , arg2f1, value2f1_der);
@@ -1102,7 +1129,7 @@ void RadialHomogeneousSolution::rhsm_compute_R0_and_1der_and_2der(const complex_
         special_functions::sf_compute_gamma_function_z(n + nu + 1. - constants::I*rhsv_tau, gamma3);
         special_functions::sf_compute_gamma_function_z(n + nu + 1. - rhsv_spin_weight_s - constants::I*rhsv_epsilon, gamma4);
         
-        coeff_sum = rhsv_minimal_coefficient_n_negative[-n]*gamma1*gamma2/gamma3/gamma4;
+        coeff_sum = rhsv_minimal_coefficient_n_negative.at(-n)*gamma1*gamma2/gamma3/gamma4;
 
         special_functions::sf_compute_2F1(a, b, c , arg2f1, value2f1);
         special_functions::sf_compute_2F1(a+1, b, c , arg2f1,value2f1_der);
@@ -1222,7 +1249,7 @@ void RadialHomogeneousSolution::rhsm_compute_Rup(const complex_type& nu, const s
         gamma_ratio1_plus = gamma_ratio1_plus*(arg_gamma_ratio_1 + n - 1);
         gamma_ratio2_plus = gamma_ratio2_plus*(arg_gamma_ratio_2 + n - 1);
         
-        coeff_sum = rhsv_minimal_coefficient_n_positive[n]*mp::pow(constants::I, n)*gamma_ratio1_plus/gamma_ratio2_plus;
+        coeff_sum = rhsv_minimal_coefficient_n_positive.at(n)*mp::pow(constants::I, n)*gamma_ratio1_plus/gamma_ratio2_plus;
         z_term_Rup = mp::pow(2*z_var, n)*U1;
         addend_1 = coeff_sum*z_term_Rup;
 
@@ -1236,7 +1263,7 @@ void RadialHomogeneousSolution::rhsm_compute_Rup(const complex_type& nu, const s
         gamma_ratio1_minus = gamma_ratio1_minus/(arg_gamma_ratio_1 + n );
         gamma_ratio2_minus = gamma_ratio2_minus/(arg_gamma_ratio_2 + n );
         
-        coeff_sum = rhsv_minimal_coefficient_n_negative[-n]*mp::pow(constants::I, n)*gamma_ratio1_minus/gamma_ratio2_minus;
+        coeff_sum = rhsv_minimal_coefficient_n_negative.at(-n)*mp::pow(constants::I, n)*gamma_ratio1_minus/gamma_ratio2_minus;
         z_term_Rup = mp::pow(2*z_var, n)*U1;
         addend_2 = coeff_sum*z_term_Rup;
 
@@ -1315,7 +1342,7 @@ void RadialHomogeneousSolution::rhsm_compute_Rup_and_1der(const complex_type& nu
         special_functions::sf_compute_gamma_ratio(nu + 1 + rhsv_spin_weight_s - constants::I * rhsv_epsilon, n, gamma_ratio1);
         special_functions::sf_compute_gamma_ratio(nu + 1 - rhsv_spin_weight_s + constants::I * rhsv_epsilon,n, gamma_ratio2);
         
-        coeff_sum = rhsv_minimal_coefficient_n_positive[n]*mp::pow(constants::I, n)*gamma_ratio1/gamma_ratio2;
+        coeff_sum = rhsv_minimal_coefficient_n_positive.at(n)*mp::pow(constants::I, n)*gamma_ratio1/gamma_ratio2;
         z_term_Rup = mp::pow(2*z_var, n)*U1;
         addend_1 = coeff_sum*z_term_Rup;
 
@@ -1334,7 +1361,7 @@ void RadialHomogeneousSolution::rhsm_compute_Rup_and_1der(const complex_type& nu
         special_functions::sf_compute_gamma_ratio(nu + 1. - rhsv_spin_weight_s + constants::I * rhsv_epsilon,n, gamma_ratio2);
         special_functions::sf_compute_confluent_hypergeometric_function(a, b, z, U1);
 
-        coeff_sum = rhsv_minimal_coefficient_n_negative[-n]*mp::pow(constants::I, n)*gamma_ratio1/gamma_ratio2;
+        coeff_sum = rhsv_minimal_coefficient_n_negative.at(-n)*mp::pow(constants::I, n)*gamma_ratio1/gamma_ratio2;
         z_term_Rup = mp::pow(2*z_var, n)*U1;
         addend_2 = coeff_sum*z_term_Rup;
 
@@ -1443,7 +1470,7 @@ void RadialHomogeneousSolution::rhsm_compute_Rup_and_1der_and_2der(const complex
         special_functions::sf_compute_gamma_ratio(nu + 1 + rhsv_spin_weight_s - constants::I * rhsv_epsilon, n, gamma_ratio1);
         special_functions::sf_compute_gamma_ratio(nu + 1 - rhsv_spin_weight_s + constants::I * rhsv_epsilon,n, gamma_ratio2);
         
-        coeff_sum = rhsv_minimal_coefficient_n_positive[n]*mp::pow(constants::I, n)*gamma_ratio1/gamma_ratio2;
+        coeff_sum = rhsv_minimal_coefficient_n_positive.at(n)*mp::pow(constants::I, n)*gamma_ratio1/gamma_ratio2;
         z_term_Rup = mp::pow(2*z_var, n)*U1;
         addend_1 = coeff_sum*z_term_Rup;
 
@@ -1466,7 +1493,7 @@ void RadialHomogeneousSolution::rhsm_compute_Rup_and_1der_and_2der(const complex
         special_functions::sf_compute_gamma_ratio(nu + 1. - rhsv_spin_weight_s + constants::I * rhsv_epsilon,n, gamma_ratio2);
         special_functions::sf_compute_confluent_hypergeometric_function(a, b, z, U1);
 
-        coeff_sum = rhsv_minimal_coefficient_n_negative[-n]*mp::pow(constants::I, n)*gamma_ratio1/gamma_ratio2;
+        coeff_sum = rhsv_minimal_coefficient_n_negative.at(-n)*mp::pow(constants::I, n)*gamma_ratio1/gamma_ratio2;
         z_term_Rup = mp::pow(2*z_var, n)*U1;
         addend_2 = coeff_sum*z_term_Rup;
 
@@ -1838,7 +1865,7 @@ void RadialHomogeneousSolution::rhsm_get_R_up_and_1der_and_2der_mst(const float_
      rhsm_compute_R_up_and_1der_and_2der_mst(r, R_up, R_up_der, R_up_2der);
 }
 
-void RadialHomogeneousSolution::rhsm_get_R_in_numerical_integration(const float_type& r_start_integration, const float_type& r_end_integration, const float_type&r, complex_type& R_in)
+void RadialHomogeneousSolution::rhsm_get_R_in_numerical_integration(const float_type& r_start_integration, const float_type& r_end_integration, const float_type& radius, complex_type& R_in)
 {
     if(rhsv_numerical_integration_in == 0)
     {
@@ -1846,21 +1873,15 @@ void RadialHomogeneousSolution::rhsm_get_R_in_numerical_integration(const float_
         rhsv_numerical_integration_in = 1;
     }
 
+    const float_type r = integration_radius(radius, r_start_integration, r_end_integration);
+    const auto x_interp = interpolate_radial(rhsv_dense_data_horizon, r);
+
     complex_type coeff = (mp::pow((-1 - mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)) + r)/(-1 + mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)) + r),
     (constants::I*rhsv_black_hole_spin_a*rhsv_m)/(2.*mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2))))/
     (mp::exp(constants::I*rhsv_angular_frequency_omega*(r + (1 + 1/mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)))*mp::log((-1 - mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)) + r)/2.) + 
          (1 - 1/mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)))*mp::log((-1 + mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)) + r)/2.)))*r*
      mp::pow(mp::pow(rhsv_black_hole_spin_a,2) + (-2 + r)*r,rhsv_spin_weight_s)));
 
-    std::array<complex_type, 2> x_interp;
-
-    for (const auto& d : rhsv_dense_data_horizon) {
-        if (r >= d.t_start && r <= d.t_start + d.dt) {
-            d.stepper_snapshot.calc_state(r, x_interp);
-            break;
-        }
-    }
-    
     R_in = x_interp[0] * coeff; 
 
     if(rhsv_negative_freq == 1)
@@ -1869,7 +1890,7 @@ void RadialHomogeneousSolution::rhsm_get_R_in_numerical_integration(const float_
     }
 }
 
-void RadialHomogeneousSolution::rhsm_get_R_up_numerical_integration(const float_type& r_start_integration, const float_type& r_end_integration, const float_type&r, complex_type& R_up)
+void RadialHomogeneousSolution::rhsm_get_R_up_numerical_integration(const float_type& r_start_integration, const float_type& r_end_integration, const float_type& radius, complex_type& R_up)
 {
     if(rhsv_numerical_integration_up == 0)
     {
@@ -1877,22 +1898,15 @@ void RadialHomogeneousSolution::rhsm_get_R_up_numerical_integration(const float_
         rhsv_numerical_integration_up = 1;
     }
 
+    const float_type r = integration_radius(radius, r_start_integration, r_end_integration);
+    const auto x_interp = interpolate_radial(rhsv_dense_data_infinity, float_type(r_end_integration - r));
+
     float_type r_coeff = r;
     complex_type coeff = (mp::exp(constants::I*rhsv_angular_frequency_omega*(r_coeff + ((1 + mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)))*mp::log((-1 - mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)) + r_coeff)/2.) - 
     (1 - mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)))*mp::log((-1 + mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)) + r_coeff)/2.))/mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2))))*
     mp::pow((-1 - mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)) + r_coeff)/(-1 + mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)) + r_coeff),
     (constants::I*rhsv_black_hole_spin_a*rhsv_m)/(2.*mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)))))/(r_coeff*mp::pow(mp::pow(rhsv_black_hole_spin_a,2) - 2*r_coeff + mp::pow(r_coeff,2),rhsv_spin_weight_s));
 
-    std::array<complex_type, 2> x_interp;
-
-    float_type rho =  r_end_integration - r;
-    for (const auto& d : rhsv_dense_data_infinity) {
-        if (rho >= d.t_start && rho <= d.t_start + d.dt) {
-            d.stepper_snapshot.calc_state(rho, x_interp);
-            break;
-        }
-    }
-    
     R_up = x_interp[0] * coeff; 
         
     if(rhsv_negative_freq == 1)
@@ -1901,7 +1915,7 @@ void RadialHomogeneousSolution::rhsm_get_R_up_numerical_integration(const float_
     }
 }
 
-void RadialHomogeneousSolution::rhsm_get_R_in_numerical_integration_and_1der_and_2der(const float_type& r_start_integration, const float_type& r_end_integration, const float_type&r, complex_type& R_in, complex_type& R_in_der, complex_type& R_in_2der)
+void RadialHomogeneousSolution::rhsm_get_R_in_numerical_integration_and_1der_and_2der(const float_type& r_start_integration, const float_type& r_end_integration, const float_type& radius, complex_type& R_in, complex_type& R_in_der, complex_type& R_in_2der)
 {
     if(rhsv_numerical_integration_in == 0)
     {
@@ -1909,21 +1923,15 @@ void RadialHomogeneousSolution::rhsm_get_R_in_numerical_integration_and_1der_and
         rhsv_numerical_integration_in = 1;
     }
 
+    const float_type r = integration_radius(radius, r_start_integration, r_end_integration);
+    const auto x_interp = interpolate_radial(rhsv_dense_data_horizon, r);
+
     complex_type coeff = (mp::pow((-1 - mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)) + r)/(-1 + mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)) + r),
     (constants::I*rhsv_black_hole_spin_a*rhsv_m)/(2.*mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2))))/
     (mp::exp(constants::I*rhsv_angular_frequency_omega*(r + (1 + 1/mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)))*mp::log((-1 - mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)) + r)/2.) + 
          (1 - 1/mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)))*mp::log((-1 + mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)) + r)/2.)))*r*
      mp::pow(mp::pow(rhsv_black_hole_spin_a,2) + (-2 + r)*r,rhsv_spin_weight_s)));
 
-    std::array<complex_type, 2> x_interp;
-
-    for (const auto& d : rhsv_dense_data_horizon) {
-        if (r >= d.t_start && r <= d.t_start + d.dt) {
-            d.stepper_snapshot.calc_state(r, x_interp);
-            break;
-        }
-    }
-    
     R_in = x_interp[0] * coeff; 
 
     complex_type coeff_der = (mp::pow(2,2*constants::I*rhsv_angular_frequency_omega)*mp::pow(-1 - mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)) + r,-2 - constants::I*(1 + 1/mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)))*rhsv_angular_frequency_omega)*
@@ -1947,7 +1955,7 @@ void RadialHomogeneousSolution::rhsm_get_R_in_numerical_integration_and_1der_and
     }
 }
 
-void RadialHomogeneousSolution::rhsm_get_R_up_numerical_integration_and_1der_and_2der(const float_type& r_start_integration, const float_type& r_end_integration, const float_type&r, complex_type& R_up, complex_type& R_up_der, complex_type& R_up_2der)
+void RadialHomogeneousSolution::rhsm_get_R_up_numerical_integration_and_1der_and_2der(const float_type& r_start_integration, const float_type& r_end_integration, const float_type& radius, complex_type& R_up, complex_type& R_up_der, complex_type& R_up_2der)
 {
     if(rhsv_numerical_integration_up == 0)
     {
@@ -1955,22 +1963,15 @@ void RadialHomogeneousSolution::rhsm_get_R_up_numerical_integration_and_1der_and
         rhsv_numerical_integration_up = 1;
     }
 
+    const float_type r = integration_radius(radius, r_start_integration, r_end_integration);
+    const auto x_interp = interpolate_radial(rhsv_dense_data_infinity, float_type(r_end_integration - r));
+
     float_type r_coeff = r;
     complex_type coeff = (mp::exp(constants::I*rhsv_angular_frequency_omega*(r_coeff + ((1 + mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)))*mp::log((-1 - mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)) + r_coeff)/2.) - 
     (1 - mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)))*mp::log((-1 + mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)) + r_coeff)/2.))/mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2))))*
     mp::pow((-1 - mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)) + r_coeff)/(-1 + mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)) + r_coeff),
     (constants::I*rhsv_black_hole_spin_a*rhsv_m)/(2.*mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)))))/(r_coeff*mp::pow(mp::pow(rhsv_black_hole_spin_a,2) - 2*r_coeff + mp::pow(r_coeff,2),rhsv_spin_weight_s));
 
-    std::array<complex_type, 2> x_interp;
-
-    float_type rho =  r_end_integration - r;
-    for (const auto& d : rhsv_dense_data_infinity) {
-        if (rho >= d.t_start && rho <= d.t_start + d.dt) {
-            d.stepper_snapshot.calc_state(rho, x_interp);
-            break;
-        }
-    }
-    
     R_up = x_interp[0] * coeff; 
     
     complex_type coeff_der = (mp::exp(constants::I*rhsv_angular_frequency_omega*(r + (1 + 1/mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)))*mp::log((-1 - mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)) + r)/2.) + (1 - 1/mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)))*mp::log((-1 + mp::sqrt(1 - mp::pow(rhsv_black_hole_spin_a,2)) + r)/2.)))*
