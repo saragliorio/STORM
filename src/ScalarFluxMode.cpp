@@ -1,4 +1,18 @@
 #include "ScalarFluxMode.h"
+#include <stdexcept>
+
+namespace {
+template<class F>
+auto checked_trapezoidal(F f, const float_type& a, const float_type& b) -> decltype(f(a))
+{
+    float_type error = 0, L1 = 0;
+    auto integral = boost::math::quadrature::trapezoidal(f, a, b,
+        constants::precision_trapezoidal_quadrature, 12, &error, &L1);
+    if (!(error <= constants::precision_trapezoidal_quadrature*L1))
+        throw std::runtime_error("Scalar flux quadrature did not converge");
+    return integral;
+}
+}
 
 ScalarFluxMode::ScalarFluxMode(int s, float_type M, float_type m, float_type a, float_type p, float_type e, float_type theta_inc, int ll, int mm, int kk, int nn) : 
         sfmv_spin_weight_s (s),
@@ -148,7 +162,7 @@ void ScalarFluxMode::sfmm_compute_Iz1(float_type& Iz1)
         return Iz; 
     };
 
-    Iz1 = boost::math::quadrature::trapezoidal(f_Iz1, qz_start, qz_end, constants::precision_trapezoidal_quadrature);
+    Iz1 = checked_trapezoidal(f_Iz1, qz_start, qz_end);
 }
 
 void ScalarFluxMode::sfmm_compute_Iz2(float_type& Iz2)
@@ -167,7 +181,7 @@ void ScalarFluxMode::sfmm_compute_Iz2(float_type& Iz2)
         return Iz*z*z; 
     };
 
-    Iz2 = sfmv_black_hole_spin_a*sfmv_black_hole_spin_a*boost::math::quadrature::trapezoidal(f_Iz2, qz_start, qz_end, constants::precision_trapezoidal_quadrature);  
+    Iz2 = sfmv_black_hole_spin_a*sfmv_black_hole_spin_a*checked_trapezoidal(f_Iz2, qz_start, qz_end);
 }
 
 void ScalarFluxMode::sfmm_compute_Ir1_plus(complex_type& Ir1_plus)
@@ -182,7 +196,7 @@ void ScalarFluxMode::sfmm_compute_Ir1_plus(complex_type& Ir1_plus)
         return I_plus; 
     };
 
-    Ir1_plus = boost::math::quadrature::trapezoidal(f_Ir1_plus, qr_start, qr_end, constants::precision_trapezoidal_quadrature);
+    Ir1_plus = checked_trapezoidal(f_Ir1_plus, qr_start, qr_end);
 }
 
 void ScalarFluxMode::sfmm_compute_Ir2_plus(complex_type& Ir2_plus)
@@ -201,7 +215,7 @@ void ScalarFluxMode::sfmm_compute_Ir2_plus(complex_type& Ir2_plus)
         return I_plus*r*r; 
     };
 
-    Ir2_plus = boost::math::quadrature::trapezoidal(f_Ir2_plus, qr_start, qr_end, constants::precision_trapezoidal_quadrature);
+    Ir2_plus = checked_trapezoidal(f_Ir2_plus, qr_start, qr_end);
 }
 
 void ScalarFluxMode::sfmm_compute_Ir1_minus(complex_type& Ir1_minus)
@@ -216,7 +230,7 @@ void ScalarFluxMode::sfmm_compute_Ir1_minus(complex_type& Ir1_minus)
         return I_minus; 
     };
 
-    Ir1_minus = boost::math::quadrature::trapezoidal(f_Ir1_minus, qr_start, qr_end, constants::precision_trapezoidal_quadrature);
+    Ir1_minus = checked_trapezoidal(f_Ir1_minus, qr_start, qr_end);
     
 }
 
@@ -236,7 +250,7 @@ void ScalarFluxMode::sfmm_compute_Ir2_minus(complex_type& Ir2_minus)
         return I_minus*r*r; 
     };
 
-    Ir2_minus = boost::math::quadrature::trapezoidal(f_Ir2_minus, qr_start, qr_end, constants::precision_trapezoidal_quadrature); 
+    Ir2_minus = checked_trapezoidal(f_Ir2_minus, qr_start, qr_end);
 }
 
 

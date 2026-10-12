@@ -62,6 +62,7 @@ void SpinWeightedSpheroidalHarmonics::kHat(const float_type& l, float_type& resu
     if (l == 0.0 && swshv_m == 0.0) 
     {
         result = swshv_zeta * swshv_zeta / 3.0;
+        return;
     }
 
     if (l == 0.5 && std::abs(swshv_s) == 0.5) 

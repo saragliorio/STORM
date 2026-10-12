@@ -1,168 +1,74 @@
 #include "special_functions.h"
+#include <boost/math/special_functions/bernoulli.hpp>
+#include <limits>
+#include <stdexcept>
+#include <vector>
 
 void special_functions::sf_compute_gamma_function_z (const complex_type& z, complex_type& gamma)
 {
-  if(mp::abs(z.imag()) != 0)
-  {
-    float_type g("22.618910");
-    
-    int n = 21;
-
-    std::vector<complex_type> coeff;
-    float_type coeff0("+2.0240434640140357514731512432760");
-    coeff0 *= float_type{"1e-10"};
-    float_type coeff1{"+1.5333183020199267370932516012553"};
-    float_type coeff2{"-1.1640274608858812982567477805332"};
-    coeff2 *= float_type{"1e1"}; 
-    float_type coeff3{"+4.0053698000222503376927701573076"};
-    coeff3 *= float_type{"1e1"};
-    float_type coeff4{"-8.2667863469173479039227422723581"};
-    coeff4 *= float_type{"1e1"};
-    float_type coeff5{"+1.1414465885256804336106748692495"};
-    coeff5 *= float_type{"1e2"};
-    float_type coeff6{"-1.1135645608449754488425056563075"};
-    coeff6 *= float_type{"1e2"};
-    float_type coeff7{"+7.9037451549298877731413453151252"};
-    coeff7 *= float_type{"1e1"}; 
-    float_type coeff8{"-4.1415428804507353801947558814560"};
-    coeff8 *=  float_type{"1e1"};
-    float_type coeff9{"+1.6094742170165161102085734210327"};
-    coeff9 *=  float_type{"1e1"};
-    float_type coeff10{"-4.6223809979028638614212851576524"};  
-    float_type coeff11{"+9.7030884294357827423006360746167"};
-    coeff11 *= float_type{"1e-1"};
-    float_type coeff12{"-1.4607332380456449418243363858893"};
-    coeff12 *= float_type{"1e-1"};
-    float_type coeff13{"+1.5330325530769204955496334450658"};
-    coeff13 *=  float_type{"1e-2"};
-    float_type coeff14{"-1.0773862404547660506042948153734"};
-    coeff14 *=   float_type{"1e-3"};
-    float_type coeff15{"+4.7911128916072940196391032755132"};
-    coeff15 *=  float_type{"1e-5"};
-    float_type coeff16{"-1.2437781042887028450811158692678"};
-    coeff16 *= float_type{"1e-6"};
-    float_type coeff17{"+1.6751019107496606112103160490729"};
-    coeff17 *= float_type{"1e-8"};
-    float_type coeff18{"-9.7674656970897286097939311684868"};
-    coeff18 *=  float_type{"1e-11"};
-    float_type coeff19{"+1.8326577220560509759575892664132"};
-    coeff19 *= float_type{"1e-13"};
-    float_type coeff20{"-6.4508377189118502115673823719605"};
-    coeff20 *=  float_type{"1e-17"};
-    float_type coeff21{"+1.3382662604773700632782310392171"};
-    coeff21 *=  float_type{"1e-21"};
-
-    coeff.push_back(coeff0);
-    coeff.push_back(coeff1);
-    coeff.push_back(coeff2);
-    coeff.push_back(coeff3);
-    coeff.push_back(coeff4);
-    coeff.push_back(coeff5);
-    coeff.push_back(coeff6);
-    coeff.push_back(coeff7);
-    coeff.push_back(coeff8);
-    coeff.push_back(coeff9);
-    coeff.push_back(coeff10);
-    coeff.push_back(coeff11);
-    coeff.push_back(coeff12);
-    coeff.push_back(coeff13);
-    coeff.push_back(coeff14);
-    coeff.push_back(coeff15);
-    coeff.push_back(coeff16);
-    coeff.push_back(coeff17);
-    coeff.push_back(coeff18);
-    coeff.push_back(coeff19);
-    coeff.push_back(coeff20);
-    coeff.push_back(coeff21);
-
-    complex_type result;
-
-    if(z.real()>= 0)
-    { 
-        complex_type L_g = coeff[0];
-        for(int k=1; k <= n; ++k)
-        {
-            L_g = L_g + coeff[k] / ( z - 1. + k );
-        }
-
-        result = 2. * mp::sqrt( mp::exp(float_type("1"))/constants::pi ) * mp::pow( (z + g - 0.5)/(mp::exp(float_type("1"))) , z - 0.5 ) * L_g;
-    }
-    
-    else
-    {
-        complex_type L_g = coeff[0];
-        complex_type t = -z;
-        for(int k=1; k <= n; ++k)
-        {
-            L_g = L_g + coeff[k] / ( t + k );
-        }
-        complex_type gamma_t_plus_1 = 2. * mp::sqrt( mp::exp(float_type("1"))/constants::pi ) * mp::pow( (t + g + 0.5)/(mp::exp(float_type("1"))) , t + 0.5 ) * L_g;
-        result = constants::pi / mp::sin(constants::pi * ( 1. + t ) ) / gamma_t_plus_1;
-    }
-    gamma = result;
-  }
-  else
+  if(z.imag() == 0)
   {
     gamma = bm::tgamma(z.real());
+    return;
+  }
+  if(z.real() < 0)
+  {
+    const float_type integer_part = mp::floor(z.real() + float_type("0.5"));
+    complex_type sine = mp::sin(constants::pi * complex_type(z.real() - integer_part, z.imag()));
+    if(mp::fmod(integer_part, float_type(2)) != 0)
+      sine = -sine;
+    sf_compute_gamma_function_z(1 - z, gamma);
+    gamma = constants::pi / (sine * gamma);
+    return;
   }
 
-  // float_type r = 1000;
-  // complex_type sum = 0;
-  // int nmax = 999; //r-1
-  // for(int n = 1; n<=nmax; ++n)
-  // {
-  //   float_type fact = boost::math::factorial<float_type>(n-1);
-  //   float_type coeff = (std::pow(-1,1 + n)*mp::exp(-n + r)*mp::pow(-n + r,-0.5 + n))/fact;
-  //   sum = sum + coeff/(n+z-1);
-  // }
-
-  // gamma = mp::exp(-r - z + 1 )*mp::pow(r + z - 1, z - 0.5)*(mp::sqrt(2*constants::pi) + sum);
-  
+  static const std::vector<float_type> coefficients = [] {
+    std::vector<float_type> result(std::numeric_limits<float_type>::digits10 + 1);
+    for(unsigned k = 1; k < result.size(); ++k)
+      result[k] = bm::bernoulli_b2n<float_type>(k) / (float_type(2 * k) * float_type(2 * k - 1));
+    return result;
+  }();
+  complex_type shifted = z, product = 1;
+  while(shifted.real() < std::numeric_limits<float_type>::digits10)
+  {
+    product *= shifted;
+    shifted += 1;
+  }
+  complex_type logarithm = (shifted - float_type("0.5")) * mp::log(shifted) - shifted +
+                          mp::log(2 * constants::pi) / 2;
+  const complex_type inverse = 1 / shifted;
+  complex_type power = inverse;
+  float_type bound_power = 1 / shifted.real();
+  for(unsigned k = 1; k < coefficients.size(); ++k)
+  {
+    // DLMF 5.11(ii): the omitted log-Gamma remainder is bounded using Re(shifted).
+    if(mp::abs(coefficients[k]) * bound_power < std::numeric_limits<float_type>::epsilon())
+    {
+      gamma = mp::exp(logarithm) / product;
+      return;
+    }
+    logarithm += coefficients[k] * power;
+    power *= inverse * inverse;
+    bound_power /= shifted.real() * shifted.real();
+  }
+  throw std::runtime_error("Complex Gamma expansion did not converge");
 }
 
 void special_functions::sf_compute_gamma_ratio (const complex_type& a, const int n, complex_type& gamma_ratio)
-{   
-  if(mp::abs(a.imag()) == 0 && n>=0)
-  {  
-    gamma_ratio = 1.;
-    if(n == 0) 
-    {
-      gamma_ratio = 1.;
-    }
-    else
-    {
-      gamma_ratio = 1.;
-      for(int i = 0; i<n; ++i)
-      {
-        gamma_ratio = gamma_ratio*(a + i);
-      }
-    }
-  }
-  else if(mp::abs(a.imag()) == 0 && n<=0)
-  {  
-    gamma_ratio = 1.;
-    if(n == 0) 
-    {
-      gamma_ratio = 1.;
-    }
-    else
-    {
-      gamma_ratio = 1.;
-      for(int i = -1; i >= n ; --i)
-      {
-        gamma_ratio = gamma_ratio*(a + i);
-      }
-      gamma_ratio = 1./gamma_ratio;
-    }
+{
+  complex_type product = 1;
+  if(n >= 0)
+  {
+    for(int i = 0; i < n; ++i)
+      product *= a + i;
   }
   else
   {
-    complex_type num;
-    complex_type den;
-    sf_compute_gamma_function_z(a+n, num);
-    sf_compute_gamma_function_z(a, den);
-    gamma_ratio = num/den;
+    for(int i = -1; i >= n; --i)
+      product *= a + i;
+    product = 1 / product;
   }
+  gamma_ratio = product;
 }
 
 void special_functions::sf_compute_gamma_ratio(const float_type& a, const int n, float_type& gamma_ratio)
