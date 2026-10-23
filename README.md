@@ -165,6 +165,46 @@ All example programs demonstrate how to:
 ## Compilation Notes
 - Numerical tolerances, precision, and algorithm parameters are configurable in `config.h`.
 
+## Compactified scalar radial backend
+
+Select `ScalarRadialBackendKind::Endpoint` through `ScalarFluxOptions` to use the
+compactified solver; the existing constructor continues to use MST. This backend
+supports `s=0`, `M=1`. Flux comparisons cover circular and equatorial eccentric
+single modes, with 100 decimal digits (the default in `config.h`). For example,
+the tested `a=0.9, p=8, e=0.3, l=m=2, k=0, n=1` mode at a `1e-14` accuracy target:
+
+```cpp
+#include "ScalarFluxMode.h"
+int main() {
+    ScalarFluxOptions options;
+    options.backend = ScalarRadialBackendKind::Endpoint;
+    options.quadrature_tolerance = float_type("1e-16");
+    auto& radial = options.endpoint_options;
+    radial.direct_static_startup = true;
+    radial.integration_absolute_tolerance = radial.integration_relative_tolerance =
+        radial.interpolation_tolerance = radial.outgoing_tolerance = float_type("1e-16");
+    ScalarFluxMode mode(0, 1, 1, float_type("0.9"), 8, float_type("0.3"),
+                        0, 2, 2, 0, 1, options);
+    float_type horizon, infinity;
+    mode.sfmm_get_energy_flux_horizon_infinity_eccentric_orbit(horizon, infinity);
+    std::cout << horizon << " " << infinity << std::endl;
+}
+```
+
+Both horizon startups are retained: `direct_static_startup=true` was used for the
+eccentric benchmarks; the default `false` was used for radial/circular benchmarks.
+The endpoint tolerance remains `1e-34`. Numerical tolerances control the solver;
+they do not guarantee the same observable error for every physical mode.
+Save the example as `compact_example.cpp`, then compile and run with your Boost path:
+
+```bash
+g++ -O3 -std=c++17 -Iinclude -I/path/to/boost compact_example.cpp src/*.cpp -o compact_example
+./compact_example
+make COMPACT_TEST MSTREGRESSION
+./exe/compactified_test
+./exe/MST_regression_test
+```
+
 ## TODO / Future Work
 - Add a class for gravitational fluxes (almost done, currently in testing phase).  
 - Implement static modes (i.e., ω = 0) in the raRadialHomogeneousSolutiondial class (almost done, currently in testing phase).  

@@ -1,114 +1,54 @@
-.PHONY : all RHSTEST GOMTEST SWSHTEST SFMTEST MSTREGRESSION
-all : all_sources # Define the default target to build all sources
+.PHONY: all all_sources test_sources RHSTEST GOMTEST SWSHTEST SFMTEST MSTREGRESSION COMPACT_TEST clean help
+all: all_sources
 
-# compilation flags and options
 CC := g++
+CXXFLAGS := -g -O3 -std=c++17 -Wall -Wno-reorder
+LDFLAGS :=
 
-#uncomment the 2 lines below if you are using a mac
-#CXXFLAGS := -g -O3 -std=c++17 -Wall -Xclang 
-#LDFLAGS := -Xclang  
-
-#uncomment 2 two linew below if you are using linux
-CXXFLAGS := -g -O3 -std=c++17 -Wall  -Wno-reorder 
-LDFLAGS := 
-
-# Project directory structure
 SRC := ./src
 MAIN_SRC := ./main_src
 INC := ./include
 OBJ := ./obj
 EXE := ./exe
 
-# Include directories: change this line to point to your Boost installation 			<-----		!!!!!! PAY ATTENTION HERE !!!!!
-INCLUDES := -I./$(INC) -I/YOUR/PATH/TO/boost_VERSION_NUMBER
+# Set these paths to your Boost installation.
+INCLUDES := -I$(INC) -I/YOUR/PATH/TO/boost_VERSION_NUMBER
+BOOST_LIB_DIR := /YOUR/PATH/TO/boost_VERSION_NUMBER/libs
+LIBS := -L$(BOOST_LIB_DIR)
 
-# Boost libraries directory: change this line to point to your Boost lib folder			<-----		!!!!!! PAY ATTENTION HERE !!!!!
-BOOST_LIB_DIR := /YOUR/PATH/TO/boost_VERION_NUMBER/libs
-
-# Boost libraries
-BOOST_LIBS := -L$(BOOST_LIB_DIR) 
-
-# Combined Libraries
-LIBS := $(BOOST_LIBS) 
-
-# List of classes and namespaces
-CLASSES := RadialHomogeneousSolution GeodesicOrbitalMotion SpinWeightedSpheroidalHarmonics special_functions config ScalarFluxMode
-
-# Define objects from classes
+CLASSES := RadialHomogeneousSolution GeodesicOrbitalMotion SpinWeightedSpheroidalHarmonics special_functions config ScalarFluxMode CompactifiedCharacteristicRadialSolution ScalarRadialBackend
 OBJECTS := $(CLASSES:%=$(OBJ)/%.o)
 
-# Define the executables
-RHSTEST : $(EXE)/RHS_test
-GOMTEST : $(EXE)/GOM_test
-SWSHTEST : $(EXE)/SWSH_test
-SFMTEST : $(EXE)/SFM_test
-MSTREGRESSION : $(EXE)/MST_regression_test
+RHSTEST: $(EXE)/RHS_test
+GOMTEST: $(EXE)/GOM_test
+SWSHTEST: $(EXE)/SWSH_test
+SFMTEST: $(EXE)/SFM_test
+MSTREGRESSION: $(EXE)/MST_regression_test
+COMPACT_TEST: $(EXE)/compactified_test
+all_sources: test_sources
+test_sources: RHSTEST GOMTEST SWSHTEST SFMTEST
 
+$(OBJECTS): $(wildcard $(INC)/*.h)
+$(OBJ)/RHS_test.o $(OBJ)/GOM_test.o $(OBJ)/SWSH_test.o $(OBJ)/SFM_test.o $(OBJ)/MST_regression_test.o $(OBJ)/compactified_test.o: $(wildcard $(INC)/*.h)
 
-#define rule to compile objects from classes
 $(OBJ)/%.o: $(SRC)/%.cpp $(INC)/%.h
-	@if [ ! -d $(OBJ) ]; then mkdir -pv $(OBJ); fi
+	@mkdir -p $(OBJ)
 	$(CC) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
 
-#define rules to compile objects from main sources
-$(OBJ)/RHS_test.o : $(MAIN_SRC)/RHS_test.cpp
-	@if [ ! -d $(OBJ) ]; then mkdir -pv $(OBJ); fi
+$(OBJ)/%_test.o: $(MAIN_SRC)/%_test.cpp
+	@mkdir -p $(OBJ)
 	$(CC) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
 
-$(OBJ)/GOM_test.o : $(MAIN_SRC)/GOM_test.cpp
-	@if [ ! -d $(OBJ) ]; then mkdir -pv $(OBJ); fi
+$(OBJ)/compactified_test.o: tests/compactified_test.cpp
+	@mkdir -p $(OBJ)
 	$(CC) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
 
-$(OBJ)/SWSH_test.o : $(MAIN_SRC)/SWSH_test.cpp
-	@if [ ! -d $(OBJ) ]; then mkdir -pv $(OBJ); fi
-	$(CC) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
-
-$(OBJ)/SFM_test.o : $(MAIN_SRC)/SFM_test.cpp
-	@if [ ! -d $(OBJ) ]; then mkdir -pv $(OBJ); fi
-	$(CC) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
-
-$(OBJ)/MST_regression_test.o : $(MAIN_SRC)/MST_regression_test.cpp
-	@if [ ! -d $(OBJ) ]; then mkdir -pv $(OBJ); fi
-	$(CC) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
-
-# defining the variable all
-all : all_sources
-
-test_sources : RHSTEST GOMTEST SWSHTEST SFMTEST
- 
-all_sources : test_sources
-
-#dependencies and compilation rules for executables
-
-$(EXE)/RHS_test : $(OBJECTS) $(OBJ)/RHS_test.o
-	@if [ ! -d $(EXE) ]; then mkdir -pv $(EXE); fi
+$(EXE)/%_test: $(OBJECTS) $(OBJ)/%_test.o
+	@mkdir -p $(EXE)
 	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
 
-$(EXE)/GOM_test : $(OBJECTS) $(OBJ)/GOM_test.o
-	@if [ ! -d $(EXE) ]; then mkdir -pv $(EXE); fi
-	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
-
-$(EXE)/SWSH_test : $(OBJECTS) $(OBJ)/SWSH_test.o
-	@if [ ! -d $(EXE) ]; then mkdir -pv $(EXE); fi
-	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
-
-$(EXE)/SFM_test : $(OBJECTS) $(OBJ)/SFM_test.o
-	@if [ ! -d $(EXE) ]; then mkdir -pv $(EXE); fi
-	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
-
-$(EXE)/MST_regression_test : $(OBJECTS) $(OBJ)/MST_regression_test.o
-	@if [ ! -d $(EXE) ]; then mkdir -pv $(EXE); fi
-	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
-
-# Clean targets to remove generated files and directories
 clean:
-	rm -rfv $(OBJ) $(EXE)
+	rm -rf $(OBJ) $(EXE)
 
-# Help target to display available targets and their descriptions
 help:
-	@echo "  make RHSTEST               - Build RHSTEST"
-	@echo "  make GOMTEST                -Build GOMTEST"
-	@echo "  make SWSHTEST              - Build SWSHTEST"
-	@echo "  make SFMTEST				- Build SFMTEST"
-	@echo "  make clean                 - Remove object files and executables"
-	@echo "  make all                   - Build all"
+	@echo "make RHSTEST GOMTEST SWSHTEST SFMTEST MSTREGRESSION COMPACT_TEST all clean"

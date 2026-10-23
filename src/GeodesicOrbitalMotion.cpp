@@ -1,8 +1,8 @@
 #include "GeodesicOrbitalMotion.h"
 
-GeodesicOrbitalMotion::GeodesicOrbitalMotion(float_type M, float_type m, float_type a, float_type p, float_type e, float_type theta_inc, int ll, int mm, int kk, int nn) : 
-        gomv_mass_black_hole_M (M), 
-        gomv_mass_test_particle_m (m), 
+GeodesicOrbitalMotion::GeodesicOrbitalMotion(float_type M, float_type m, float_type a, float_type p, float_type e, float_type theta_inc, int ll, int mm, int kk, int nn) :
+        gomv_mass_black_hole_M (M),
+        gomv_mass_test_particle_m (m),
         gomv_black_hole_spin_a (a),
         gomv_semilatus_rectum_p (p),
         gomv_eccentricity_e(e),
@@ -12,43 +12,42 @@ GeodesicOrbitalMotion::GeodesicOrbitalMotion(float_type M, float_type m, float_t
         gomv_k(kk),
         gomv_n(nn)
     {
-        //IF a > 0.999 and a < -0.999, m > l, m, l, n, k not integers, inclination angle != , e >1 and e < 0, p > separatrix 
-        if (mp::abs(gomv_black_hole_spin_a) > 0.999) 
+
+        if (mp::abs(gomv_black_hole_spin_a) > 0.999)
         {
             std::cerr << "Error in GeodesicOrbitalMotion class: black hole spin parameter a must be <= 0.999" << std::endl;
             std::exit(EXIT_FAILURE);
         }
 
-        if (mp::abs(gomv_black_hole_spin_a) < -0.999) 
+        if (mp::abs(gomv_black_hole_spin_a) < -0.999)
         {
             std::cerr << "Error in GeodesicOrbitalMotion class: black hole spin parameter a must be >= -0.999" << std::endl;
             std::exit(EXIT_FAILURE);
         }
-        
-        if (std::abs(gomv_m) > gomv_l) 
+
+        if (std::abs(gomv_m) > gomv_l)
         {
             std::cerr << "Error in GeodesicOrbitalMotion class: mode index m must satisfy |m| <=l" << std::endl;
             std::exit(EXIT_FAILURE);
         }
 
-        if (gomv_semilatus_rectum_p <= 0) 
+        if (gomv_semilatus_rectum_p <= 0)
         {
             std::cerr << "Error in GeodesicOrbitalMotion class: semilatus rectum parameter p must be > 0 (the method to compute the separatrix is missing, pay attention to use physical values of p (even when p > 0))" << std::endl;
             std::exit(EXIT_FAILURE);
         }
 
-        if (gomv_eccentricity_e < 0) 
+        if (gomv_eccentricity_e < 0)
         {
             std::cerr << "Error in GeodesicOrbitalMotion class: eccentricity parameter e must be >= 0. " << std::endl;
             std::exit(EXIT_FAILURE);
         }
 
-        if (gomv_eccentricity_e > 1) 
+        if (gomv_eccentricity_e > 1)
         {
             std::cerr << "Error in GeodesicOrbitalMotion class: eccentricity parameter e must be < 1. " << std::endl;
             std::exit(EXIT_FAILURE);
         }
-
 
         float_type signcos = mp::cos(gomv_inclination_angle)/mp::abs(mp::cos(gomv_inclination_angle));
         if(signcos>0)
@@ -62,25 +61,25 @@ GeodesicOrbitalMotion::GeodesicOrbitalMotion(float_type M, float_type m, float_t
 
         gomv_theta_min = mp::abs(constants::pi*0.5 - gomv_inclination_angle);
         gomv_z1 = mp::cos(gomv_theta_min);
-        gomv_r1 = gomv_semilatus_rectum_p/(1.- gomv_eccentricity_e);                                                                               
-        gomv_r2 = gomv_semilatus_rectum_p/(1.+ gomv_eccentricity_e);                                                                               
-    
+        gomv_r1 = gomv_semilatus_rectum_p/(1.- gomv_eccentricity_e);
+        gomv_r2 = gomv_semilatus_rectum_p/(1.+ gomv_eccentricity_e);
+
         gomm_compute_constants_of_motion();
-    
-        float_type AplusB = 2./(1. - mp::pow(gomv_energy, 2) ) - gomv_r1 - gomv_r2;                                                                
-        float_type AtimesB = mp::pow(gomv_black_hole_spin_a,2) * gomv_carter_constant / ( (1. - mp::pow(gomv_energy, 2) ) * gomv_r1 * gomv_r2);      
-        gomv_r3 = 0.5*(AplusB + mp::pow ( mp::pow(AplusB, 2) - 4.*AtimesB, 0.5));                                                                
-        gomv_r4 = AtimesB/gomv_r3;     
-        
-        gomv_kr =(gomv_r1-gomv_r2)/(gomv_r1-gomv_r3)*(gomv_r3-gomv_r4)/(gomv_r2-gomv_r4);                                 
-    
+
+        float_type AplusB = 2./(1. - mp::pow(gomv_energy, 2) ) - gomv_r1 - gomv_r2;
+        float_type AtimesB = mp::pow(gomv_black_hole_spin_a,2) * gomv_carter_constant / ( (1. - mp::pow(gomv_energy, 2) ) * gomv_r1 * gomv_r2);
+        gomv_r3 = 0.5*(AplusB + mp::pow ( mp::pow(AplusB, 2) - 4.*AtimesB, 0.5));
+        gomv_r4 = AtimesB/gomv_r3;
+
+        gomv_kr =(gomv_r1-gomv_r2)/(gomv_r1-gomv_r3)*(gomv_r3-gomv_r4)/(gomv_r2-gomv_r4);
+
         gomv_z2 = mp::sqrt(mp::pow(gomv_black_hole_spin_a,2)*(1.-gomv_energy*gomv_energy) + gomv_angular_momentum*gomv_angular_momentum/( 1. - gomv_z1*gomv_z1 ) );
-        
-        gomv_kz = gomv_black_hole_spin_a*gomv_black_hole_spin_a * (1.-gomv_energy*gomv_energy)*gomv_z1*gomv_z1/gomv_z2/gomv_z2;                                                          
-        
+
+        gomv_kz = gomv_black_hole_spin_a*gomv_black_hole_spin_a * (1.-gomv_energy*gomv_energy)*gomv_z1*gomv_z1/gomv_z2/gomv_z2;
+
         gomv_rp = gomv_mass_black_hole_M + mp::sqrt(gomv_mass_black_hole_M*gomv_mass_black_hole_M - gomv_black_hole_spin_a*gomv_black_hole_spin_a);
         gomv_rm = gomv_mass_black_hole_M - mp::sqrt(gomv_mass_black_hole_M*gomv_mass_black_hole_M - gomv_black_hole_spin_a*gomv_black_hole_spin_a);
-        
+
         gomv_hr = (gomv_r1 - gomv_r2)/(gomv_r1 - gomv_r3);
         gomv_hp = gomv_hr*(gomv_r3 - gomv_rp)/(gomv_r2 - gomv_rp);
         gomv_hm = gomv_hr*(gomv_r3 - gomv_rm)/(gomv_r2 - gomv_rm);
@@ -96,7 +95,7 @@ void GeodesicOrbitalMotion::gomm_compute_delta_function(const float_type& r, flo
 }
 
 void GeodesicOrbitalMotion::gomm_compute_constants_of_motion()
-{   
+{
     if(gomv_eccentricity_e == 0 && gomv_inclination_angle == 0)
     {
         gomv_energy = (gomv_black_hole_spin_a + (-2 + gomv_semilatus_rectum_p)*mp::sqrt(gomv_semilatus_rectum_p))/mp::sqrt(2*gomv_black_hole_spin_a*mp::pow(gomv_semilatus_rectum_p,1.5) + (-3 + gomv_semilatus_rectum_p)*mp::pow(gomv_semilatus_rectum_p,2));
@@ -105,43 +104,43 @@ void GeodesicOrbitalMotion::gomm_compute_constants_of_motion()
     }
     else if(gomv_eccentricity_e != 0 && gomv_inclination_angle == 0)
     {
-        float_type F = (-4*mp::pow(gomv_black_hole_spin_a,2)*mp::pow(1 - mp::pow(gomv_eccentricity_e,2),2)*gomv_mass_black_hole_M + mp::pow(3 + mp::pow(gomv_eccentricity_e,2),2)*mp::pow(gomv_mass_black_hole_M,2)*gomv_semilatus_rectum_p - 
+        float_type F = (-4*mp::pow(gomv_black_hole_spin_a,2)*mp::pow(1 - mp::pow(gomv_eccentricity_e,2),2)*gomv_mass_black_hole_M + mp::pow(3 + mp::pow(gomv_eccentricity_e,2),2)*mp::pow(gomv_mass_black_hole_M,2)*gomv_semilatus_rectum_p -
         2*(3 + mp::pow(gomv_eccentricity_e,2))*gomv_mass_black_hole_M*mp::pow(gomv_semilatus_rectum_p,2) + mp::pow(gomv_semilatus_rectum_p,3))/mp::pow(gomv_semilatus_rectum_p,3);
 
-        float_type N = (2*(-(mp::pow(gomv_black_hole_spin_a,2)*(1 + 3*mp::pow(gomv_eccentricity_e,2))*gomv_mass_black_hole_M) + (-mp::pow(gomv_black_hole_spin_a,2) + (3 + mp::pow(gomv_eccentricity_e,2))*mp::pow(gomv_mass_black_hole_M,2))*gomv_semilatus_rectum_p - 
+        float_type N = (2*(-(mp::pow(gomv_black_hole_spin_a,2)*(1 + 3*mp::pow(gomv_eccentricity_e,2))*gomv_mass_black_hole_M) + (-mp::pow(gomv_black_hole_spin_a,2) + (3 + mp::pow(gomv_eccentricity_e,2))*mp::pow(gomv_mass_black_hole_M,2))*gomv_semilatus_rectum_p -
         gomv_mass_black_hole_M*mp::pow(gomv_semilatus_rectum_p,2)))/gomv_semilatus_rectum_p;
 
         float_type C = mp::pow(mp::pow(gomv_black_hole_spin_a,2) - gomv_mass_black_hole_M*gomv_semilatus_rectum_p,2);
-        
-        float_type x = mp::sqrt((- N - mp::sqrt(-4*C*F + N*N)*(gomv_black_hole_spin_a/mp::abs(gomv_black_hole_spin_a)))/2/F); 
-        
+
+        float_type x = mp::sqrt((- N - mp::sqrt(-4*C*F + N*N)*(gomv_black_hole_spin_a/mp::abs(gomv_black_hole_spin_a)))/2/F);
+
         gomv_energy = mp::sqrt(1 - ((1 - mp::pow(gomv_eccentricity_e,2))*gomv_mass_black_hole_M*(1 - ((1 - mp::pow(gomv_eccentricity_e,2))*mp::pow(x,2))/mp::pow(gomv_semilatus_rectum_p,2)))/gomv_semilatus_rectum_p);
 
-        gomv_angular_momentum = x + gomv_black_hole_spin_a*gomv_energy; 
+        gomv_angular_momentum = x + gomv_black_hole_spin_a*gomv_energy;
 
         gomv_carter_constant = 0.;
     }
     else
     {
-        float_type delta_max; 
+        float_type delta_max;
         gomm_compute_delta_function(gomv_r1, delta_max);
-        float_type d_max = delta_max*(mp::pow(gomv_r1,2)+mp::pow(gomv_black_hole_spin_a,2)*gomv_z1*gomv_z1); 
-        float_type f_max = mp::pow(gomv_r1,4)+mp::pow(gomv_black_hole_spin_a, 2)*(gomv_r1*(gomv_r1+2) + gomv_z1*gomv_z1 * delta_max); 
-        float_type g_max = 2*gomv_black_hole_spin_a*gomv_r1;  
-        float_type h_max = gomv_r1*(gomv_r1-2) + (gomv_z1*gomv_z1* delta_max)/(1 - gomv_z1*gomv_z1); 
+        float_type d_max = delta_max*(mp::pow(gomv_r1,2)+mp::pow(gomv_black_hole_spin_a,2)*gomv_z1*gomv_z1);
+        float_type f_max = mp::pow(gomv_r1,4)+mp::pow(gomv_black_hole_spin_a, 2)*(gomv_r1*(gomv_r1+2) + gomv_z1*gomv_z1 * delta_max);
+        float_type g_max = 2*gomv_black_hole_spin_a*gomv_r1;
+        float_type h_max = gomv_r1*(gomv_r1-2) + (gomv_z1*gomv_z1* delta_max)/(1 - gomv_z1*gomv_z1);
 
-        float_type delta_min; 
+        float_type delta_min;
         gomm_compute_delta_function(gomv_r2, delta_min);
-        float_type d_min = delta_min*(mp::pow(gomv_r2,2)+mp::pow(gomv_black_hole_spin_a,2)*gomv_z1*gomv_z1); 
-        float_type f_min = mp::pow(gomv_r2,4)+mp::pow(gomv_black_hole_spin_a, 2)*(gomv_r2*(gomv_r2+2) + gomv_z1*gomv_z1 * delta_min); 
-        float_type g_min = 2*gomv_black_hole_spin_a*gomv_r2;   
-        float_type h_min = gomv_r2*(gomv_r2 - 2) + (gomv_z1*gomv_z1* delta_min)/(1 - gomv_z1*gomv_z1); 
-        
-        float_type kappa = d_min * h_max - d_max * h_min;   
-        float_type epsilon = d_min * g_max - d_max * g_min; 
-        float_type rho = f_min * h_max - f_max * h_min;     
-        float_type eta = f_min * g_max - f_max * g_min;     
-        float_type sigma = g_min * h_max - g_max * h_min;   
+        float_type d_min = delta_min*(mp::pow(gomv_r2,2)+mp::pow(gomv_black_hole_spin_a,2)*gomv_z1*gomv_z1);
+        float_type f_min = mp::pow(gomv_r2,4)+mp::pow(gomv_black_hole_spin_a, 2)*(gomv_r2*(gomv_r2+2) + gomv_z1*gomv_z1 * delta_min);
+        float_type g_min = 2*gomv_black_hole_spin_a*gomv_r2;
+        float_type h_min = gomv_r2*(gomv_r2 - 2) + (gomv_z1*gomv_z1* delta_min)/(1 - gomv_z1*gomv_z1);
+
+        float_type kappa = d_min * h_max - d_max * h_min;
+        float_type epsilon = d_min * g_max - d_max * g_min;
+        float_type rho = f_min * h_max - f_max * h_min;
+        float_type eta = f_min * g_max - f_max * g_min;
+        float_type sigma = g_min * h_max - g_max * h_min;
 
         float_type sqrt_argument = sigma * ( sigma * mp::pow(epsilon, 2) + rho * epsilon * kappa - eta * mp::pow(kappa, 2));
         float_type num = kappa * rho + 2*epsilon*sigma - 2.*gomv_prograde_retrograde_orbit*mp::pow(sqrt_argument,0.5);
@@ -151,11 +150,11 @@ void GeodesicOrbitalMotion::gomm_compute_constants_of_motion()
         float_type addend_1 = mp::pow((g_min * gomv_energy)/( h_min),2);
         float_type addend_2 = (f_min * mp::pow( gomv_energy , 2) - d_min)/(h_min) ;
         float_type power_argument = addend_1 + addend_2;
-        gomv_angular_momentum = - (g_min * gomv_energy)/(h_min) + gomv_prograde_retrograde_orbit * mp::pow(power_argument ,0.5);  
+        gomv_angular_momentum = - (g_min * gomv_energy)/(h_min) + gomv_prograde_retrograde_orbit * mp::pow(power_argument ,0.5);
 
         gomv_beta = mp::pow(gomv_black_hole_spin_a, 2)*(1 - mp::pow(gomv_energy,2));
         gomv_carter_constant = gomv_z1*gomv_z1* (gomv_beta + (mp::pow(gomv_angular_momentum,2))/(1 - gomv_z1*gomv_z1));
-    } 
+    }
 }
 
 void GeodesicOrbitalMotion::gomm_get_constants_of_motion(float_type& en, float_type& ang, float_type& crt)
@@ -167,20 +166,20 @@ void GeodesicOrbitalMotion::gomm_get_constants_of_motion(float_type& en, float_t
 
 void GeodesicOrbitalMotion::gomm_compute_frequencies_mino_time()
 {
-    gomv_Upsilon_r = (constants::pi * mp::pow( (1. - mp::pow(gomv_energy, 2))*(gomv_r1-gomv_r3)*(gomv_r2-gomv_r4) , 0.5))*0.5/boost::math::ellint_1(mp::sqrt(gomv_kr));     
+    gomv_Upsilon_r = (constants::pi * mp::pow( (1. - mp::pow(gomv_energy, 2))*(gomv_r1-gomv_r3)*(gomv_r2-gomv_r4) , 0.5))*0.5/boost::math::ellint_1(mp::sqrt(gomv_kr));
     gomv_Upsilon_z = constants::pi*gomv_z2/2./boost::math::ellint_1(mp::sqrt(gomv_kz));
-    
+
     float_type Upsilon_phi_plus = (2.*gomv_energy* gomv_rp - gomv_black_hole_spin_a * gomv_angular_momentum )/ (gomv_r3 - gomv_rp) * (1. - (gomv_r2 - gomv_r3)/(gomv_r2 - gomv_rp)* boost::math::ellint_3( mp::sqrt(gomv_kr), gomv_hp) / boost::math::ellint_1(mp::sqrt(gomv_kr)) ) ;
     float_type Upsilon_phi_minus = (2.*gomv_energy* gomv_rm - gomv_black_hole_spin_a * gomv_angular_momentum )/ (gomv_r3 - gomv_rm) * (1. - (gomv_r2 - gomv_r3)/(gomv_r2 - gomv_rm)* boost::math::ellint_3( mp::sqrt(gomv_kr), gomv_hm) / boost::math::ellint_1(mp::sqrt(gomv_kr)) ) ;
     float_type Upsilon_phi_r = gomv_black_hole_spin_a/(gomv_rp-gomv_rm)*(Upsilon_phi_plus - Upsilon_phi_minus);
     float_type Upsilon_phi_z = gomv_angular_momentum/boost::math::ellint_1(mp::sqrt(gomv_kz))*boost::math::ellint_3( mp::sqrt(gomv_kz), gomv_z1*gomv_z1);
     gomv_Upsilon_phi = Upsilon_phi_r + Upsilon_phi_z;
-    
+
     float_type Gamma_r_plus = ((4. - gomv_black_hole_spin_a * gomv_angular_momentum/gomv_energy)*gomv_rp - 2.*gomv_black_hole_spin_a*gomv_black_hole_spin_a)/(gomv_r3 - gomv_rp)*(1.-(gomv_r2 - gomv_r3)/(gomv_r2 - gomv_rp)*boost::math::ellint_3( mp::sqrt(gomv_kr), gomv_hp)/boost::math::ellint_1(mp::sqrt(gomv_kr)));
     float_type Gamma_r_minus = ((4. - gomv_black_hole_spin_a * gomv_angular_momentum/gomv_energy)*gomv_rm - 2.*gomv_black_hole_spin_a*gomv_black_hole_spin_a)/(gomv_r3 - gomv_rm)*(1.-(gomv_r2 - gomv_r3)/(gomv_r2 - gomv_rm)*boost::math::ellint_3( mp::sqrt(gomv_kr), gomv_hm)/boost::math::ellint_1(mp::sqrt(gomv_kr)));
     float_type Gamma_r = (4. + gomv_black_hole_spin_a*gomv_black_hole_spin_a)*gomv_energy + gomv_energy*( 0.5 *   ((4. + gomv_r1 + gomv_r2 + gomv_r3)*gomv_r3 - gomv_r1*gomv_r2 + (gomv_r1 - gomv_r3)*(gomv_r2-gomv_r4)*boost::math::ellint_2( mp::sqrt(gomv_kr)) /boost::math::ellint_1(mp::sqrt(gomv_kr)) +
                         + (4. + gomv_r1 + gomv_r2 + gomv_r3 + gomv_r4)*(gomv_r2 - gomv_r3)*boost::math::ellint_3(mp::sqrt(gomv_kr), gomv_hr)/boost::math::ellint_1(mp::sqrt(gomv_kr)) ) + 2./(gomv_rp-gomv_rm) *(Gamma_r_plus - Gamma_r_minus));
-    
+
     float_type Gamma_z;
 
     if(gomv_carter_constant == 0)
@@ -230,7 +229,7 @@ void GeodesicOrbitalMotion::gomm_get_angular_frequency_omega(float_type& omega)
 
 void GeodesicOrbitalMotion::gomm_compute_r_function(const float_type& qr, float_type& r)
 {
-    float_type u = boost::math::ellint_1(mp::sqrt(gomv_kr))*qr/constants::pi;
+    float_type u = (gomv_radial_constants_ready ? gomv_radial_K : boost::math::ellint_1(mp::sqrt(gomv_kr)))*qr/constants::pi;
     float_type sn = boost::math::jacobi_sn(mp::sqrt(gomv_kr), u);
     r = (gomv_r3*(gomv_r1 - gomv_r2)*mp::pow(sn,2) - gomv_r2*(gomv_r1-gomv_r3))/
         ((gomv_r1 - gomv_r2)*mp::pow(sn,2) - (gomv_r1-gomv_r3));
@@ -242,6 +241,65 @@ void GeodesicOrbitalMotion::gomm_compute_z_function(const float_type& qz, float_
     z = gomv_z1*boost::math::jacobi_sn(mp::sqrt(gomv_kz), u);
 }
 
+float_type GeodesicOrbitalMotion::gomm_compute_tr_pi()
+{
+    float_type y = constants::pi;
+    float_type tilde_tr_plus = (gomv_rp*(4. - gomv_black_hole_spin_a * gomv_angular_momentum / gomv_energy) - 2.*gomv_black_hole_spin_a*gomv_black_hole_spin_a)/(gomv_r2 - gomv_rp)/(gomv_r3-gomv_rp)*boost::math::ellint_3(mp::sqrt(gomv_kr), gomv_hp, y);
+    float_type tilde_tr_minus = (gomv_rm*(4. - gomv_black_hole_spin_a * gomv_angular_momentum / gomv_energy) - 2.*gomv_black_hole_spin_a*gomv_black_hole_spin_a)/(gomv_r2 - gomv_rm)/(gomv_r3-gomv_rm)*boost::math::ellint_3(mp::sqrt(gomv_kr), gomv_hm, y);
+    float_type tilde_tr_pi =  gomv_energy*(gomv_r2 - gomv_r3)/mp::sqrt((1. - gomv_energy*gomv_energy)*(gomv_r1 - gomv_r3)*(gomv_r2 - gomv_r4))*( (4. + gomv_r1 + gomv_r2 + gomv_r3 + gomv_r4)*boost::math::ellint_3(mp::sqrt(gomv_kr), gomv_hr, y) - 4./(gomv_rp - gomv_rm)*(tilde_tr_plus -tilde_tr_minus) +
+            (gomv_r1 - gomv_r3)*(gomv_r2 - gomv_r4)/(gomv_r2 - gomv_r3)* (2*boost::math::ellint_2(mp::sqrt(gomv_kr)) - gomv_hr * mp::sin(y)*mp::cos(y) * mp::sqrt(1. - gomv_kr*mp::pow(mp::sin(y),2))/(1. - gomv_hr*mp::pow( mp::sin(y),2))  ) );
+
+    return tilde_tr_pi;
+}
+
+float_type GeodesicOrbitalMotion::gomm_compute_phir_pi()
+{
+    float_type tilde_phi_r_plus = (2.*gomv_rp - gomv_black_hole_spin_a*gomv_angular_momentum/gomv_energy)/(gomv_r2 - gomv_rp)/(gomv_r3 - gomv_rp)*2.*boost::math::ellint_3(mp::sqrt(gomv_kr), gomv_hp);
+    float_type tilde_phi_r_minus = (2.*gomv_rm - gomv_black_hole_spin_a*gomv_angular_momentum/gomv_energy)/(gomv_r2 - gomv_rm)/(gomv_r3 - gomv_rm)*2.*boost::math::ellint_3(mp::sqrt(gomv_kr), gomv_hm);
+    float_type tilde_phi_r_pi = -2. * gomv_black_hole_spin_a*gomv_energy*(gomv_r2 - gomv_r3)/(gomv_rp-gomv_rm)/mp::sqrt((1.-gomv_energy*gomv_energy)*(gomv_r1 - gomv_r3)*(gomv_r2-gomv_r4))*(tilde_phi_r_plus -tilde_phi_r_minus);
+
+    return tilde_phi_r_pi;
+}
+
+void GeodesicOrbitalMotion::gomm_cache_radial_constants()
+{
+    if(gomv_radial_constants_ready) return;
+    gomv_radial_K = boost::math::ellint_1(mp::sqrt(gomv_kr));
+    gomv_radial_tr_pi = gomm_compute_tr_pi();
+    gomv_radial_phir_pi = gomm_compute_phir_pi();
+    gomv_radial_constants_ready = true;
+}
+
+void GeodesicOrbitalMotion::gomm_get_radial_source(const float_type& qr,
+    float_type& r, float_type& tr, float_type& phi_r)
+{
+    const float_type modulus = mp::sqrt(gomv_kr);
+    const float_type u = (gomv_radial_constants_ready ? gomv_radial_K : boost::math::ellint_1(modulus))*qr/constants::pi;
+    float_type cn;
+    const float_type sn = boost::math::jacobi_elliptic(modulus, u, &cn,
+        static_cast<float_type*>(nullptr));
+    r = (gomv_r3*(gomv_r1 - gomv_r2)*mp::pow(sn,2) - gomv_r2*(gomv_r1-gomv_r3))/
+        ((gomv_r1 - gomv_r2)*mp::pow(sn,2) - (gomv_r1-gomv_r3));
+    if(mp::abs(qr - constants::pi) < constants::precision_q) {
+        tr = 0;
+        phi_r = 0;
+        return;
+    }
+    const float_type y = sn >= 0 ? float_type(mp::acos(cn)) :
+        float_type(2.*constants::pi - mp::acos(cn));
+    const float_type pi_plus = boost::math::ellint_3(modulus, gomv_hp, y);
+    const float_type pi_minus = boost::math::ellint_3(modulus, gomv_hm, y);
+    const float_type tilde_tr_plus = (gomv_rp*(4. - gomv_black_hole_spin_a * gomv_angular_momentum / gomv_energy) - 2.*gomv_black_hole_spin_a*gomv_black_hole_spin_a)/(gomv_r2 - gomv_rp)/(gomv_r3-gomv_rp)*pi_plus;
+    const float_type tilde_tr_minus = (gomv_rm*(4. - gomv_black_hole_spin_a * gomv_angular_momentum / gomv_energy) - 2.*gomv_black_hole_spin_a*gomv_black_hole_spin_a)/(gomv_r2 - gomv_rm)/(gomv_r3-gomv_rm)*pi_minus;
+    const float_type tilde_tr_y = gomv_energy*(gomv_r2 - gomv_r3)/mp::sqrt((1. - gomv_energy*gomv_energy)*(gomv_r1 - gomv_r3)*(gomv_r2 - gomv_r4))*( (4. + gomv_r1 + gomv_r2 + gomv_r3 + gomv_r4)*boost::math::ellint_3(modulus, gomv_hr, y) - 4./(gomv_rp - gomv_rm)*(tilde_tr_plus -tilde_tr_minus) +
+        (gomv_r1 - gomv_r3)*(gomv_r2 - gomv_r4)/(gomv_r2 - gomv_r3)* (boost::math::ellint_2(modulus,y) - gomv_hr * mp::sin(y)*mp::cos(y) * mp::sqrt(1. - gomv_kr*mp::pow(mp::sin(y),2))/(1. - gomv_hr*mp::pow(mp::sin(y),2)) ) );
+    tr = tilde_tr_y - (gomv_radial_constants_ready ? gomv_radial_tr_pi : gomm_compute_tr_pi())/2./constants::pi*qr;
+    const float_type tilde_phi_r_plus = (2.*gomv_rp - gomv_black_hole_spin_a*gomv_angular_momentum/gomv_energy)/(gomv_r2 - gomv_rp)/(gomv_r3 - gomv_rp)*pi_plus;
+    const float_type tilde_phi_r_minus = (2.*gomv_rm - gomv_black_hole_spin_a*gomv_angular_momentum/gomv_energy)/(gomv_r2 - gomv_rm)/(gomv_r3 - gomv_rm)*pi_minus;
+    const float_type tilde_phi_r_y = -2. * gomv_black_hole_spin_a*gomv_energy*(gomv_r2 - gomv_r3)/(gomv_rp-gomv_rm)/mp::sqrt((1.-gomv_energy*gomv_energy)*(gomv_r1 - gomv_r3)*(gomv_r2-gomv_r4))*(tilde_phi_r_plus -tilde_phi_r_minus);
+    phi_r = tilde_phi_r_y - (gomv_radial_constants_ready ? gomv_radial_phir_pi : gomm_compute_phir_pi())/2./constants::pi*qr;
+}
+
 void GeodesicOrbitalMotion::gomm_compute_tr_function(const float_type& qr, float_type& tr)
 {
     if(mp::abs(qr - constants::pi) < constants::precision_q)
@@ -250,14 +308,11 @@ void GeodesicOrbitalMotion::gomm_compute_tr_function(const float_type& qr, float
     }
     else
     {
-        float_type y = constants::pi;
-        float_type tilde_tr_plus = (gomv_rp*(4. - gomv_black_hole_spin_a * gomv_angular_momentum / gomv_energy) - 2.*gomv_black_hole_spin_a*gomv_black_hole_spin_a)/(gomv_r2 - gomv_rp)/(gomv_r3-gomv_rp)*boost::math::ellint_3(mp::sqrt(gomv_kr), gomv_hp, y);
-        float_type tilde_tr_minus = (gomv_rm*(4. - gomv_black_hole_spin_a * gomv_angular_momentum / gomv_energy) - 2.*gomv_black_hole_spin_a*gomv_black_hole_spin_a)/(gomv_r2 - gomv_rm)/(gomv_r3-gomv_rm)*boost::math::ellint_3(mp::sqrt(gomv_kr), gomv_hm, y);
-        float_type tilde_tr_pi =  gomv_energy*(gomv_r2 - gomv_r3)/mp::sqrt((1. - gomv_energy*gomv_energy)*(gomv_r1 - gomv_r3)*(gomv_r2 - gomv_r4))*( (4. + gomv_r1 + gomv_r2 + gomv_r3 + gomv_r4)*boost::math::ellint_3(mp::sqrt(gomv_kr), gomv_hr, y) - 4./(gomv_rp - gomv_rm)*(tilde_tr_plus -tilde_tr_minus) +
-                    (gomv_r1 - gomv_r3)*(gomv_r2 - gomv_r4)/(gomv_r2 - gomv_r3)* (2*boost::math::ellint_2(mp::sqrt(gomv_kr)) - gomv_hr * mp::sin(y)*mp::cos(y) * mp::sqrt(1. - gomv_kr*mp::pow(mp::sin(y),2))/(1. - gomv_hr*mp::pow( mp::sin(y),2))  ) );
-    
-        float_type u = boost::math::ellint_1(mp::sqrt(gomv_kr))*qr/constants::pi;
-        
+        float_type y;
+        const float_type tilde_tr_pi = (gomv_radial_constants_ready ? gomv_radial_tr_pi : gomm_compute_tr_pi());
+
+        float_type u = (gomv_radial_constants_ready ? gomv_radial_K : boost::math::ellint_1(mp::sqrt(gomv_kr)))*qr/constants::pi;
+
         float_type sn = boost::math::jacobi_sn(mp::sqrt(gomv_kr), u);
         if(sn >= 0)
         {
@@ -267,14 +322,14 @@ void GeodesicOrbitalMotion::gomm_compute_tr_function(const float_type& qr, float
         else
         {
             float_type cn = boost::math::jacobi_cn(mp::sqrt(gomv_kr), u);
-            y = 2.*constants::pi - mp::acos(cn);   
+            y = 2.*constants::pi - mp::acos(cn);
         }
 
-        tilde_tr_plus = (gomv_rp*(4. - gomv_black_hole_spin_a * gomv_angular_momentum / gomv_energy) - 2.*gomv_black_hole_spin_a*gomv_black_hole_spin_a)/(gomv_r2 - gomv_rp)/(gomv_r3-gomv_rp)*boost::math::ellint_3(mp::sqrt(gomv_kr), gomv_hp, y);
-        tilde_tr_minus = (gomv_rm*(4. - gomv_black_hole_spin_a * gomv_angular_momentum / gomv_energy) - 2.*gomv_black_hole_spin_a*gomv_black_hole_spin_a)/(gomv_r2 - gomv_rm)/(gomv_r3-gomv_rm)*boost::math::ellint_3(mp::sqrt(gomv_kr), gomv_hm, y);
+        float_type tilde_tr_plus = (gomv_rp*(4. - gomv_black_hole_spin_a * gomv_angular_momentum / gomv_energy) - 2.*gomv_black_hole_spin_a*gomv_black_hole_spin_a)/(gomv_r2 - gomv_rp)/(gomv_r3-gomv_rp)*boost::math::ellint_3(mp::sqrt(gomv_kr), gomv_hp, y);
+        float_type tilde_tr_minus = (gomv_rm*(4. - gomv_black_hole_spin_a * gomv_angular_momentum / gomv_energy) - 2.*gomv_black_hole_spin_a*gomv_black_hole_spin_a)/(gomv_r2 - gomv_rm)/(gomv_r3-gomv_rm)*boost::math::ellint_3(mp::sqrt(gomv_kr), gomv_hm, y);
         float_type tilde_tr_y =  gomv_energy*(gomv_r2 - gomv_r3)/mp::sqrt((1. - gomv_energy*gomv_energy)*(gomv_r1 - gomv_r3)*(gomv_r2 - gomv_r4))*( (4. + gomv_r1 + gomv_r2 + gomv_r3 + gomv_r4)*boost::math::ellint_3(mp::sqrt(gomv_kr), gomv_hr, y) - 4./(gomv_rp - gomv_rm)*(tilde_tr_plus -tilde_tr_minus) +
                     (gomv_r1 - gomv_r3)*(gomv_r2 - gomv_r4)/(gomv_r2 - gomv_r3)* (boost::math::ellint_2(mp::sqrt(gomv_kr),y) - gomv_hr * mp::sin(y)*mp::cos(y) * mp::sqrt(1. - gomv_kr*mp::pow(mp::sin(y),2))/(1. - gomv_hr*mp::pow( mp::sin(y),2))  ) );
-    
+
         tr = tilde_tr_y - tilde_tr_pi/2./constants::pi*qr;
     }
 
@@ -291,7 +346,6 @@ void GeodesicOrbitalMotion::gomm_compute_tz_function(const float_type& qz, float
         float_type y = constants::pi;
         float_type tilde_tz_pi = - gomv_energy/(1. - gomv_energy*gomv_energy)*gomv_z2*2*boost::math::ellint_2(sqrt(gomv_kz));
 
-       
         float_type u = 2.*boost::math::ellint_1(mp::sqrt(gomv_kz))* (qz+constants::pi/2.)/constants::pi;
 
         float_type sn = boost::math::jacobi_sn(mp::sqrt(gomv_kz), u);
@@ -305,16 +359,15 @@ void GeodesicOrbitalMotion::gomm_compute_tz_function(const float_type& qz, float
         else
         {
             float_type cn = boost::math::jacobi_cn(mp::sqrt(gomv_kz), u);
-            y = 2.*constants::pi - mp::acos(cn);   
+            y = 2.*constants::pi - mp::acos(cn);
 
         }
-
 
         float_type tilde_tz_y = - gomv_energy/(1. - gomv_energy*gomv_energy)*gomv_z2*boost::math::ellint_2(sqrt(gomv_kz), y);
 
         tz = tilde_tz_y - tilde_tz_pi/constants::pi*(qz+constants::pi/2.);
     }
-} 
+}
 
 void GeodesicOrbitalMotion::gomm_compute_t_function(const float_type& qr, const float_type& qz, const float_type& qt, float_type& t)
 {
@@ -335,13 +388,11 @@ void GeodesicOrbitalMotion::gomm_compute_phir_function(const float_type& qr, flo
     }
     else
     {
-        float_type y = constants::pi;
-        float_type tilde_phi_r_plus = (2.*gomv_rp - gomv_black_hole_spin_a*gomv_angular_momentum/gomv_energy)/(gomv_r2 - gomv_rp)/(gomv_r3 - gomv_rp)*2.*boost::math::ellint_3(mp::sqrt(gomv_kr), gomv_hp);
-        float_type tilde_phi_r_minus = (2.*gomv_rm - gomv_black_hole_spin_a*gomv_angular_momentum/gomv_energy)/(gomv_r2 - gomv_rm)/(gomv_r3 - gomv_rm)*2.*boost::math::ellint_3(mp::sqrt(gomv_kr), gomv_hm);
-        float_type tilde_phi_r_pi = -2. * gomv_black_hole_spin_a*gomv_energy*(gomv_r2 - gomv_r3)/(gomv_rp-gomv_rm)/mp::sqrt((1.-gomv_energy*gomv_energy)*(gomv_r1 - gomv_r3)*(gomv_r2-gomv_r4))*(tilde_phi_r_plus -tilde_phi_r_minus);
+        float_type y;
+        const float_type tilde_phi_r_pi = (gomv_radial_constants_ready ? gomv_radial_phir_pi : gomm_compute_phir_pi());
 
-        float_type u = boost::math::ellint_1(mp::sqrt(gomv_kr))*qr/constants::pi;
-        
+        float_type u = (gomv_radial_constants_ready ? gomv_radial_K : boost::math::ellint_1(mp::sqrt(gomv_kr)))*qr/constants::pi;
+
         float_type sn = boost::math::jacobi_sn(mp::sqrt(gomv_kr), u);
         if(sn >= 0)
         {
@@ -351,14 +402,13 @@ void GeodesicOrbitalMotion::gomm_compute_phir_function(const float_type& qr, flo
         else
         {
             float_type cn = boost::math::jacobi_cn(mp::sqrt(gomv_kr), u);
-            y = 2.*constants::pi - mp::acos(cn);   
+            y = 2.*constants::pi - mp::acos(cn);
         }
-        
 
-        tilde_phi_r_plus = (2.*gomv_rp - gomv_black_hole_spin_a*gomv_angular_momentum/gomv_energy)/(gomv_r2 - gomv_rp)/(gomv_r3 - gomv_rp)*boost::math::ellint_3(mp::sqrt(gomv_kr), gomv_hp, y);
-        tilde_phi_r_minus = (2.*gomv_rm - gomv_black_hole_spin_a*gomv_angular_momentum/gomv_energy)/(gomv_r2 - gomv_rm)/(gomv_r3 - gomv_rm)*boost::math::ellint_3(mp::sqrt(gomv_kr), gomv_hm, y);
+        float_type tilde_phi_r_plus = (2.*gomv_rp - gomv_black_hole_spin_a*gomv_angular_momentum/gomv_energy)/(gomv_r2 - gomv_rp)/(gomv_r3 - gomv_rp)*boost::math::ellint_3(mp::sqrt(gomv_kr), gomv_hp, y);
+        float_type tilde_phi_r_minus = (2.*gomv_rm - gomv_black_hole_spin_a*gomv_angular_momentum/gomv_energy)/(gomv_r2 - gomv_rm)/(gomv_r3 - gomv_rm)*boost::math::ellint_3(mp::sqrt(gomv_kr), gomv_hm, y);
         float_type tilde_phi_r_y = -2. * gomv_black_hole_spin_a*gomv_energy*(gomv_r2 - gomv_r3)/(gomv_rp-gomv_rm)/mp::sqrt((1.-gomv_energy*gomv_energy)*(gomv_r1 - gomv_r3)*(gomv_r2-gomv_r4))*(tilde_phi_r_plus -tilde_phi_r_minus);
-        
+
         phi_r = tilde_phi_r_y - tilde_phi_r_pi/2./constants::pi*qr;
     }
 }
@@ -372,9 +422,9 @@ void GeodesicOrbitalMotion::gomm_compute_phiz_function(const float_type& qz, flo
     else
     {
         float_type tilde_phi_z_pi = - gomv_angular_momentum / gomv_z2 * 2. * boost::math::ellint_3(mp::sqrt(gomv_kz), gomv_z1*gomv_z1);
-    
+
         float_type u = 2.*boost::math::ellint_1(mp::sqrt(gomv_kz))*(qz+constants::pi/2.)/constants::pi;
-    
+
         float_type sn = boost::math::jacobi_sn(mp::sqrt(gomv_kz), u);
         float_type y;
         if(sn >= 0)
@@ -385,13 +435,13 @@ void GeodesicOrbitalMotion::gomm_compute_phiz_function(const float_type& qz, flo
         else
         {
             float_type cn = boost::math::jacobi_cn(mp::sqrt(gomv_kz), u);
-            y = 2.*constants::pi - mp::acos(cn);   
+            y = 2.*constants::pi - mp::acos(cn);
         }
 
         float_type tilde_phi_z_y = - gomv_angular_momentum / gomv_z2 * boost::math::ellint_3(mp::sqrt(gomv_kz), gomv_z1*gomv_z1, y);
-    
+
         phi_z = tilde_phi_z_y - tilde_phi_z_pi /constants::pi*(qz+constants::pi/2.);
-        
+
         phi_z = - phi_z;
     }
 
@@ -401,11 +451,11 @@ void GeodesicOrbitalMotion::gomm_compute_phi_function(const float_type& qr, cons
 {
     float_type phi_r;
     gomm_compute_phir_function(qr, phi_r);
-    
+
     float_type phi_z;
     gomm_compute_phiz_function(qz, phi_z);
 
-    phi = qphi + phi_r + phi_z; 
+    phi = qphi + phi_r + phi_z;
 }
 
 void GeodesicOrbitalMotion::gomm_compute_four_velocities(const float_type& qr, const float_type& qz, float_type& ur, float_type& uz)
@@ -420,13 +470,11 @@ void GeodesicOrbitalMotion::gomm_compute_four_velocities(const float_type& qr, c
     float_type dn_r = boost::math::jacobi_dn(mp::sqrt(gomv_kr), arg_r);
     float_type cn_r = boost::math::jacobi_cn(mp::sqrt(gomv_kr), arg_r);
     float_type sn_r = boost::math::jacobi_sn(mp::sqrt(gomv_kr), arg_r);
-    
-
 
     float_type rprime = (2*(gomv_r1 - gomv_r2)*(gomv_r1 - gomv_r3)*(gomv_r2 - gomv_r3)*ellint_1_r*cn_r*dn_r*sn_r)/
     (constants::pi*mp::pow(-gomv_r1 + gomv_r3 + (gomv_r1 - gomv_r2)*mp::pow(sn_r,2),2));
 
-    float_type zprime = (2*gomv_z1*ellint_1_z*cn_z*dn_z)/constants::pi;    
+    float_type zprime = (2*gomv_z1*ellint_1_z*cn_z*dn_z)/constants::pi;
 
     float_type var_r = qr;
     float_type var_z = constants::pi/2. + (qr*gomv_Upsilon_z)/gomv_Upsilon_r;
